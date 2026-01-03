@@ -91,6 +91,29 @@
             justify-content: center;
         }
 
+        /* Success Overlay */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.85);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            color: var(--success);
+            z-index: 10;
+            border-radius: 8px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         /* Canvas for Music Staff */
         #staffCanvas {
             width: 100%;
@@ -208,6 +231,7 @@
     </div>
 
     <div class="display-area">
+        <div id="successOverlay" class="overlay">✅</div>
         <canvas id="staffCanvas" width="600" height="200"></canvas>
     </div>
 
@@ -260,6 +284,7 @@
     let currentNote = NOTES[0];
     let noteHeldFrames = 0; // Frames the note has been held correctly
     const FRAMES_REQUIRED = 5; // Reduced for beginners: Approx 0.1 seconds of stable pitch
+    let processingSuccess = false; // Lock input during success animation
 
     // UI Elements
     const canvas = document.getElementById('staffCanvas');
@@ -418,10 +443,12 @@
     }
 
     function checkNote(freq) {
+        if (processingSuccess) return; // Ignore input during success animation
+
         // Check if frequency matches target within tolerance
-        // Tolerance: +/- 5% (Increased to approx 85 cents for beginners)
+        // Tolerance: +/- 4% (Adjusted per request)
         const target = currentNote.frequency;
-        const tolerance = target * 0.05; 
+        const tolerance = target * 0.04; 
 
         if (freq > target - tolerance && freq < target + tolerance) {
             noteHeldFrames++;
@@ -430,17 +457,28 @@
             
             if (noteHeldFrames > FRAMES_REQUIRED) {
                 // SUCCESS
-                feedbackText.innerText = "Correct! Good Job!";
+                processingSuccess = true; // Lock input
+                
+                // Visual Feedback
+                feedbackText.innerText = "Correct!";
                 feedbackText.className = "feedback success-msg";
+                document.getElementById('successOverlay').style.display = 'flex'; // Show checkmark
+                
                 noteHeldFrames = 0;
                 
                 // Logic for progression
                 setTimeout(() => {
-                    feedbackText.innerText = "Next Note...";
+                    // Reset UI
+                    document.getElementById('successOverlay').style.display = 'none'; 
+                    feedbackText.innerText = "Play..."; 
                     feedbackText.style.color = "var(--primary)";
+                    
+                    // Advance Note
                     if (currentLevel <= 2) currentNoteIndex++;
                     loadNextNote();
-                }, 1000);
+                    
+                    processingSuccess = false; // Unlock input
+                }, 2000); // 2 second delay
             }
         } else {
             // Reset if they play a wrong note
