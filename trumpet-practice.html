@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trumpet Practice: First 5 Notes</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --bg: #ecf0f1;
+            --surface: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .container {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        /* UDL: Clear navigation for levels */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button.active {
+            background-color: var(--accent);
+            font-weight: bold;
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* The Note Display Area */
+        .display-area {
+            position: relative;
+            height: 250px;
+            margin: 20px auto;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Canvas for Music Staff */
+        #staffCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Valve Diagram */
+        .valves {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+            height: 60px; /* Fixed height to prevent layout shift */
+        }
+
+        .valve {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .valve.pressed {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .valve-label {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 5px;
+            color: #7f8c8d;
+        }
+
+        /* Feedback UI */
+        .feedback {
+            font-size: 1.2rem;
+            height: 30px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .listening-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #bdc3c7;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .listening-indicator.active {
+            background-color: var(--accent);
+            animation: pulse 1s infinite;
+        }
+
+        .success-msg {
+            color: var(--success);
+            animation: bounce 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        /* Tuner/Debug Info (Hidden by default, useful for setup) */
+        #pitch-debug {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            visibility: hidden;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎺 Trumpet Practice: First 5 Notes</h1>
+    
+    <div class="instructions" id="messageBox">
+        Click "Start Microphone" to begin. Ensure you are in a quiet room.
+    </div>
+
+    <div class="controls">
+        <button id="btnStart" onclick="startAudioContext()">🎤 Start Microphone</button>
+        <button id="btnLvl1" onclick="setLevel(1)" disabled>Level 1: Order + Help</button>
+        <button id="btnLvl2" onclick="setLevel(2)" disabled>Level 2: Order Only</button>
+        <button id="btnLvl3" onclick="setLevel(3)" disabled>Level 3: Random + Help</button>
+        <button id="btnLvl4" onclick="setLevel(4)" disabled>Level 4: Challenge</button>
+    </div>
+
+    <div class="display-area">
+        <canvas id="staffCanvas" width="600" height="200"></canvas>
+    </div>
+
+    <!-- UDL: Visual Fingering Representation -->
+    <div class="valves-container">
+        <div class="valves" id="valveDisplay">
+            <div class="valve-wrapper">
+                <div class="valve" id="v1">1</div>
+            </div>
+            <div class="valve-wrapper">
+                <div class="valve" id="v2">2</div>
+            </div>
+            <div class="valve-wrapper">
+                <div class="valve" id="v3">3</div>
+            </div>
+        </div>
+        <div class="valve-label" id="fingeringText">Fingerings</div>
+    </div>
+
+    <div class="feedback">
+        <span class="listening-indicator" id="indicator"></span>
+        <span id="feedbackText">Waiting to start...</span>
+    </div>
+
+    <div id="pitch-debug">Detected: -- Hz</div>
+</div>
+
+<script>
+    // --- Configuration & Data ---
+    // Note: Trumpet is a Bb instrument. 
+    // Written C4 = Sounding Bb3 (233.08Hz)
+    // Written G4 = Sounding F4 (349.23Hz)
+    const NOTES = [
+        { name: "C", writtenOctave: 4, frequency: 233.08, valves: [0, 0, 0], position: 0 }, // Low C (below staff line)
+        { name: "D", writtenOctave: 4, frequency: 261.63, valves: [1, 0, 1], position: 1 }, // Just below staff
+        { name: "E", writtenOctave: 4, frequency: 293.66, valves: [1, 1, 0], position: 2 }, // 1st line
+        { name: "F", writtenOctave: 4, frequency: 311.13, valves: [1, 0, 0], position: 3 }, // 1st space
+        { name: "G", writtenOctave: 4, frequency: 349.23, valves: [0, 0, 0], position: 4 }  // 2nd line
+    ];
+
+    // Application State
+    let audioContext;
+    let analyser;
+    let microphone;
+    let buflen = 2048;
+    let buf = new Float32Array(buflen);
+    let isListening = false;
+    let currentLevel = 1;
+    let currentNoteIndex = 0;
+    let currentNote = NOTES[0];
+    let noteHeldFrames = 0; // Frames the note has been held correctly
+    const FRAMES_REQUIRED = 5; // Reduced for beginners: Approx 0.1 seconds of stable pitch
+
+    // UI Elements
+    const canvas = document.getElementById('staffCanvas');
+    const ctx = canvas.getContext('2d');
+    const valveEls = [document.getElementById('v1'), document.getElementById('v2'), document.getElementById('v3')];
+    const feedbackText = document.getElementById('feedbackText');
+    const debugText = document.getElementById('pitch-debug');
+    const indicator = document.getElementById('indicator');
+    const valveDisplay = document.getElementById('valveDisplay');
+    const fingeringText = document.getElementById('fingeringText');
+
+    // --- Audio System ---
+    
+    async function startAudioContext() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+
+            isListening = true;
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('messageBox').innerText = "Microphone active. Play the note shown on the staff!";
+            document.getElementById('messageBox').style.backgroundColor = "#d4edda";
+            document.getElementById('messageBox').style.color = "#155724";
+            
+            // Enable level buttons
+            [1, 2, 3, 4].forEach(i => document.getElementById(`btnLvl${i}`).disabled = false);
+            
+            setLevel(1);
+            indicator.classList.add('active');
+            updatePitch();
+        } catch (err) {
+            alert("Could not access microphone. Please allow permissions. Error: " + err);
+        }
+    }
+
+    // Autocorrelation algorithm for pitch detection
+    function autoCorrelate(buf, sampleRate) {
+        let SIZE = buf.length;
+        let rms = 0;
+
+        for (let i = 0; i < SIZE; i++) {
+            let val = buf[i];
+            rms += val * val;
+        }
+        rms = Math.sqrt(rms / SIZE);
+
+        // Noise gate
+        if (rms < 0.015) return -1; 
+
+        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) {
+            if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+        }
+        for (let i = 1; i < SIZE / 2; i++) {
+            if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+        }
+
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+
+        let c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) {
+            for (let j = 0; j < SIZE - i; j++) {
+                c[i] = c[i] + buf[j] * buf[j + i];
+            }
+        }
+
+        let d = 0; while (c[d] > c[d + 1]) d++;
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) {
+            if (c[i] > maxval) {
+                maxval = c[i];
+                maxpos = i;
+            }
+        }
+        let T0 = maxpos;
+
+        let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+        let a = (x1 + x3 - 2 * x2) / 2;
+        let b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+
+        return sampleRate / T0;
+    }
+
+    function updatePitch() {
+        if (!isListening) return;
+
+        analyser.getFloatTimeDomainData(buf);
+        let pitch = autoCorrelate(buf, audioContext.sampleRate);
+
+        if (pitch !== -1) {
+            debugText.innerText = `Detected: ${Math.round(pitch)} Hz`;
+            checkNote(pitch);
+        } else {
+            noteHeldFrames = 0; // Reset if silence
+        }
+
+        requestAnimationFrame(updatePitch);
+    }
+
+    // --- Game Logic ---
+
+    function setLevel(lvl) {
+        currentLevel = lvl;
+        
+        // Update Buttons
+        document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btnLvl${lvl}`).classList.add('active');
+
+        // Logic reset
+        currentNoteIndex = 0;
+        
+        // Visibility of scaffolding
+        if (lvl === 2 || lvl === 4) {
+            valveDisplay.classList.add('hidden');
+            fingeringText.classList.add('hidden');
+        } else {
+            valveDisplay.classList.remove('hidden');
+            fingeringText.classList.remove('hidden');
+        }
+
+        feedbackText.innerText = `Level ${lvl} Started! Play:`;
+        feedbackText.className = "feedback";
+        
+        loadNextNote();
+    }
+
+    function loadNextNote() {
+        // Selection Logic
+        if (currentLevel === 1 || currentLevel === 2) {
+            // Linear
+            if (currentNoteIndex >= NOTES.length) currentNoteIndex = 0;
+            currentNote = NOTES[currentNoteIndex];
+        } else {
+            // Random
+            let randomIndex = Math.floor(Math.random() * NOTES.length);
+            currentNote = NOTES[randomIndex];
+        }
+
+        drawStaff();
+        updateValves();
+    }
+
+    function updateValves() {
+        // [0,0,0] -> 1st, 2nd, 3rd valve status
+        const v = currentNote.valves;
+        valveEls[0].className = v[0] ? 'valve pressed' : 'valve';
+        valveEls[1].className = v[1] ? 'valve pressed' : 'valve';
+        valveEls[2].className = v[2] ? 'valve pressed' : 'valve';
+    }
+
+    function checkNote(freq) {
+        // Check if frequency matches target within tolerance
+        // Tolerance: +/- 5% (Increased to approx 85 cents for beginners)
+        const target = currentNote.frequency;
+        const tolerance = target * 0.05; 
+
+        if (freq > target - tolerance && freq < target + tolerance) {
+            noteHeldFrames++;
+            feedbackText.innerText = "Hold it...";
+            feedbackText.style.color = "orange";
+            
+            if (noteHeldFrames > FRAMES_REQUIRED) {
+                // SUCCESS
+                feedbackText.innerText = "Correct! Good Job!";
+                feedbackText.className = "feedback success-msg";
+                noteHeldFrames = 0;
+                
+                // Logic for progression
+                setTimeout(() => {
+                    feedbackText.innerText = "Next Note...";
+                    feedbackText.style.color = "var(--primary)";
+                    if (currentLevel <= 2) currentNoteIndex++;
+                    loadNextNote();
+                }, 1000);
+            }
+        } else {
+            // Reset if they play a wrong note
+            noteHeldFrames = Math.max(0, noteHeldFrames - 1); 
+        }
+    }
+
+    // --- Canvas Drawing ---
+
+    function drawStaff() {
+        // Clear
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const startX = 50;
+        const endX = 550;
+        const lineSpacing = 20;
+        const staffTop = 80;
+
+        // Draw 5 lines
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            let y = staffTop + (i * lineSpacing);
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+            ctx.stroke();
+        }
+
+        // Draw Treble Clef (Simplified representation)
+        ctx.font = "60px serif";
+        ctx.fillStyle = "#000";
+        ctx.fillText("𝄞", startX + 10, staffTop + 70);
+
+        // Draw Note
+        drawNoteHead(currentNote);
+    }
+
+    function drawNoteHead(note) {
+        // Position logic
+        // Middle G is on 2nd line from bottom.
+        // F is 1st space.
+        // E is 1st line.
+        // D is space below 1st line.
+        // C is on ledger line below.
+        
+        const staffTop = 80;
+        const lineSpacing = 20;
+        const centerX = 300;
+        
+        // Calculate Y position based on note position in array
+        // G (index 4) -> 2nd line from bottom -> staffTop + 3*lineSpacing
+        // This mapping needs to be precise visually
+        
+        // Let's map manually for the 5 notes
+        let yPos;
+        let needsLedger = false;
+
+        switch(note.name) {
+            case 'G': yPos = staffTop + (3 * lineSpacing); break; // 2nd line
+            case 'F': yPos = staffTop + (3.5 * lineSpacing); break; // 1st space
+            case 'E': yPos = staffTop + (4 * lineSpacing); break; // Bottom line
+            case 'D': yPos = staffTop + (4.5 * lineSpacing); break; // Space below
+            case 'C': 
+                yPos = staffTop + (5 * lineSpacing); 
+                needsLedger = true;
+                break; // Ledger line
+        }
+
+        // Draw Note Head
+        ctx.beginPath();
+        ctx.ellipse(centerX, yPos, 12, 10, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // Draw Stem (upwards for these notes usually)
+        ctx.beginPath();
+        ctx.moveTo(centerX + 11, yPos);
+        ctx.lineTo(centerX + 11, yPos - 50);
+        ctx.stroke();
+
+        // Draw Ledger Line for C
+        if (needsLedger) {
+            ctx.beginPath();
+            ctx.moveTo(centerX - 20, yPos);
+            ctx.lineTo(centerX + 20, yPos);
+            ctx.stroke();
+        }
+
+        // Note Name Label (Optional UDL support)
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#2c3e50";
+        ctx.fillText(note.name, centerX - 8, yPos + 40);
+    }
+
+    // Initial Draw
+    drawStaff();
+
+</script>
+</body>
+</html>
