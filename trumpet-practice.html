@@ -283,7 +283,7 @@
     let currentNoteIndex = 0;
     let currentNote = NOTES[0];
     let noteHeldFrames = 0; // Frames the note has been held correctly
-    const FRAMES_REQUIRED = 5; // Reduced for beginners: Approx 0.1 seconds of stable pitch
+    const FRAMES_REQUIRED = 20; // Increased: Approx 0.33 seconds of stable pitch to prevent jumping
     let processingSuccess = false; // Lock input during success animation
 
     // UI Elements
