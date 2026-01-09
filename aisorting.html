@@ -160,7 +160,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ddsb-community-prod';
+        // CRITICAL: We use a static key if __app_id is undefined to ensure shared users see the same collection
+        const appId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : 'ddsb-community-v1';
 
         const categoryConfigs = {
             "Lesson Planning": { color: "#2563eb", keywords: ["plan", "unit", "lesson", "syllabus", "outline", "prep", "resource", "worksheet", "activity", "centre", "center", "literacy", "numeracy"], icon: "fa-calendar-day" },
@@ -177,29 +178,25 @@
 
         const initAuth = async () => {
             try {
-                // If a token is provided, try to use it.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } catch (tokenErr) {
-                        // If token fails (like custom-token-mismatch), fall back to anonymous immediately
-                        console.warn("Custom token failed, falling back to anonymous auth:", tokenErr);
+                        console.warn("Token mismatch fallback", tokenErr);
                         await signInAnonymously(auth);
                     }
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.error("Critical Auth error:", err);
-                const errorText = document.getElementById('emptyStateText');
-                errorText.innerText = "AUTH ERROR: " + err.message;
+                console.error("Auth error:", err);
+                document.getElementById('emptyStateText').innerText = "CONNECTION ERROR: PLEASE REFRESH";
             }
         };
 
         onAuthStateChanged(auth, (u) => {
             user = u;
             if (u) {
-                console.log("Authenticated as:", u.uid);
                 setupDataListener();
             }
         });
@@ -230,15 +227,12 @@
             if (!user) return;
             const input = document.getElementById('ideaInput');
             const btn = document.getElementById('submitBtn');
-            const btnText = document.getElementById('btnText');
-            const btnLoader = document.getElementById('btnLoader');
             const text = input.value.trim();
-
             if (!text || text.length < 5) return;
 
             btn.disabled = true;
-            btnText.classList.add('hidden');
-            btnLoader.classList.remove('hidden');
+            document.getElementById('btnText').classList.add('hidden');
+            document.getElementById('btnLoader').classList.remove('hidden');
 
             try {
                 const category = determineCategory(text);
@@ -257,8 +251,8 @@
                 console.error("Submission error:", err);
             } finally {
                 btn.disabled = false;
-                btnText.classList.remove('hidden');
-                btnLoader.classList.add('hidden');
+                document.getElementById('btnText').classList.remove('hidden');
+                document.getElementById('btnLoader').classList.add('hidden');
             }
         };
 
@@ -276,21 +270,18 @@
             if (!user) return;
             if (unsubscribe) unsubscribe();
 
-            try {
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
-                const q = query(colRef); 
-                
-                unsubscribe = onSnapshot(q, (snapshot) => {
-                    ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    ideas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                    renderIdeas();
-                }, (error) => {
-                    console.error("Snapshot error:", error);
-                    document.getElementById('emptyStateText').innerText = "ERROR: Unable to load community feed.";
-                });
-            } catch (err) {
-                console.error("Listener init error:", err);
-            }
+            // Simple query - no OrderBy to avoid needing manual index creation which often breaks shared views
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
+            
+            unsubscribe = onSnapshot(colRef, (snapshot) => {
+                ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                // Sort in memory to avoid "Query requires an index" errors
+                ideas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                renderIdeas();
+            }, (error) => {
+                console.error("Snapshot error:", error);
+                document.getElementById('emptyStateText').innerText = "DATABASE ACCESS DENIED";
+            });
         }
 
         function renderIdeas() {
@@ -322,7 +313,7 @@
             sorted.forEach(category => {
                 const config = categoryConfigs[category] || categoryConfigs["General Insights"];
                 const section = document.createElement('div');
-                section.className = 'animate-in fade-in slide-in-from-bottom-2 duration-500 mb-10';
+                section.className = 'animate-in fade-in slide-in-from-bottom-2 mb-10';
                 section.innerHTML = `
                     <div class="flex items-center gap-3 mb-4 px-2">
                         <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white" style="background-color: ${config.color}"><i class="fas ${config.icon} text-xs"></i></div>
@@ -352,11 +343,9 @@
             const toast = document.getElementById('toast');
             toast.style.opacity = '1';
             toast.style.transform = 'translateY(0)';
-            toast.style.pointerEvents = 'auto';
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(1rem)';
-                toast.style.pointerEvents = 'none';
             }, 3000);
         }
 
