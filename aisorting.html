@@ -58,29 +58,52 @@
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .user-pill {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid #e2e8f0;
+        }
     </style>
 </head>
 <body class="min-h-screen">
 
     <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
         <!-- Header -->
-        <header class="mb-12 flex flex-col md:flex-row items-center gap-6">
-            <div class="logo-container">
-                <img 
-                    src="https://www.ddsb.ca/en/images/structure/logo.svg" 
-                    alt="DDSB Logo" 
-                    class="h-16 w-auto object-contain"
-                    onerror="this.onerror=null; this.src='https://via.placeholder.com/200x80?text=DDSB+Logo';"
-                >
+        <header class="mb-12 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex flex-col md:flex-row items-center gap-6">
+                <div class="logo-container">
+                    <img 
+                        src="https://www.ddsb.ca/en/images/structure/logo.svg" 
+                        alt="DDSB Logo" 
+                        class="h-16 w-auto object-contain"
+                        onerror="this.onerror=null; this.src='https://via.placeholder.com/200x80?text=DDSB+Logo';"
+                    >
+                </div>
+                <div class="text-center md:text-left border-l-0 md:border-l-2 md:pl-6 border-slate-200">
+                    <h1 class="text-3xl font-extrabold ddsb-text-navy tracking-tight">
+                        AI Insights for <span class="text-blue-600">Educators</span>
+                    </h1>
+                    <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1 flex items-center justify-center md:justify-start gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full ddsb-bg-navy"></span>
+                        Ignite Learning • Global Community Feed
+                    </p>
+                </div>
             </div>
-            <div class="text-center md:text-left border-l-0 md:border-l-2 md:pl-6 border-slate-200">
-                <h1 class="text-3xl font-extrabold ddsb-text-navy tracking-tight">
-                    AI Insights for <span class="text-blue-600">Educators</span>
-                </h1>
-                <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1 flex items-center justify-center md:justify-start gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full ddsb-bg-navy"></span>
-                    Ignite Learning • Global Community Feed
-                </p>
+
+            <!-- Auth Controls -->
+            <div id="authSection" class="flex items-center gap-3">
+                <button id="loginBtn" onclick="signInWithGoogle()" class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all card-shadow">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                    DDSB Login
+                </button>
+                <div id="userInfo" class="hidden items-center gap-3 user-pill px-4 py-2 rounded-xl shadow-sm">
+                    <div class="flex flex-col items-end">
+                        <span id="userName" class="text-xs font-bold text-slate-800 leading-none"></span>
+                        <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Verified Educator</span>
+                    </div>
+                    <img id="userAvatar" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" src="" alt="">
+                </div>
             </div>
         </header>
 
@@ -126,7 +149,7 @@
                     <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i class="fas fa-terminal text-2xl text-slate-200"></i>
                     </div>
-                    <p id="emptyStateText" class="text-slate-400 font-bold text-sm tracking-wide">CONNECTING TO FEED...</p>
+                    <p id="emptyStateText" class="text-slate-400 font-bold text-sm tracking-wide uppercase">Connecting to global feed...</p>
                 </div>
 
                 <div id="ideaGroupsContainer" class="space-y-12">
@@ -144,8 +167,24 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            onAuthStateChanged, 
+            signInWithCustomToken,
+            GoogleAuthProvider,
+            signInWithPopup
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            onSnapshot, 
+            query, 
+            doc, 
+            updateDoc, 
+            increment 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBJz-6i1LQZo5beHIJGFoVBkNA2wyUWEN4",
@@ -160,8 +199,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // CRITICAL: We use a static key if __app_id is undefined to ensure shared users see the same collection
-        const appId = (typeof __app_id !== 'undefined' && __app_id) ? __app_id : 'ddsb-community-v1';
+        // STATIC COLLECTION PATH: Locked to ensure everyone sees the same data
+        const SHARED_APP_ID = 'ddsb-community-v1';
 
         const categoryConfigs = {
             "Lesson Planning": { color: "#2563eb", keywords: ["plan", "unit", "lesson", "syllabus", "outline", "prep", "resource", "worksheet", "activity", "centre", "center", "literacy", "numeracy"], icon: "fa-calendar-day" },
@@ -176,29 +215,52 @@
         let ideas = [];
         let unsubscribe = null;
 
+        // Login Function
+        window.signInWithGoogle = async () => {
+            const provider = new GoogleAuthProvider();
+            // Force DDSB domain if desired (optional)
+            provider.setCustomParameters({ hd: 'ddsb.ca' }); 
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login failed:", error);
+            }
+        };
+
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } catch (tokenErr) {
-                        console.warn("Token mismatch fallback", tokenErr);
                         await signInAnonymously(auth);
                     }
-                } else {
+                } else if (!auth.currentUser) {
+                    // Start as anonymous if not already logged in
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                console.error("Auth error:", err);
-                document.getElementById('emptyStateText').innerText = "CONNECTION ERROR: PLEASE REFRESH";
+                console.error("Auth init failure:", err);
             }
         };
 
         onAuthStateChanged(auth, (u) => {
             user = u;
-            if (u) {
-                setupDataListener();
+            const loginBtn = document.getElementById('loginBtn');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (u && !u.isAnonymous) {
+                loginBtn.classList.add('hidden');
+                userInfo.classList.remove('hidden');
+                userInfo.classList.add('flex');
+                document.getElementById('userName').innerText = u.displayName;
+                document.getElementById('userAvatar').src = u.photoURL;
+            } else {
+                loginBtn.classList.remove('hidden');
+                userInfo.classList.add('hidden');
             }
+
+            if (u) setupDataListener();
         });
 
         initAuth();
@@ -236,11 +298,13 @@
 
             try {
                 const category = determineCategory(text);
-                const col = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
+                const col = collection(db, 'artifacts', SHARED_APP_ID, 'public', 'data', 'insights');
                 await addDoc(col, {
                     text,
                     category,
                     userId: user.uid,
+                    userName: user.displayName || 'Anonymous Educator',
+                    userPhoto: user.photoURL || null,
                     votes: 0,
                     voters: [],
                     createdAt: Date.now()
@@ -260,7 +324,7 @@
             if (!user) return;
             const voterList = Array.isArray(currentVoters) ? currentVoters : [];
             if (voterList.includes(user.uid)) return;
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'insights', id);
+            const ref = doc(db, 'artifacts', SHARED_APP_ID, 'public', 'data', 'insights', id);
             try {
                 await updateDoc(ref, { votes: increment(1), voters: [...voterList, user.uid] });
             } catch (err) { console.error("Vote error:", err); }
@@ -270,17 +334,15 @@
             if (!user) return;
             if (unsubscribe) unsubscribe();
 
-            // Simple query - no OrderBy to avoid needing manual index creation which often breaks shared views
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
+            const colRef = collection(db, 'artifacts', SHARED_APP_ID, 'public', 'data', 'insights');
             
             unsubscribe = onSnapshot(colRef, (snapshot) => {
                 ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Sort in memory to avoid "Query requires an index" errors
                 ideas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 renderIdeas();
             }, (error) => {
                 console.error("Snapshot error:", error);
-                document.getElementById('emptyStateText').innerText = "DATABASE ACCESS DENIED";
+                document.getElementById('emptyStateText').innerText = "DATABASE PERMISSION ERROR: Update Firestore Rules to match the ddsb-community-v1 path.";
             });
         }
 
@@ -324,9 +386,16 @@
                         ${groups[category].map(idea => {
                             const voters = Array.isArray(idea.voters) ? idea.voters : [];
                             const hasVoted = voters.includes(user?.uid);
+                            const authorInitial = (idea.userName || 'A').charAt(0);
                             return `
                                 <div class="idea-card bg-white p-5 rounded-2xl border border-slate-200 flex items-start justify-between gap-6 card-shadow border-l-4" style="border-left-color: ${config.color}">
-                                    <p class="text-slate-700 leading-relaxed text-sm font-medium whitespace-pre-wrap flex-grow">${idea.text}</p>
+                                    <div class="flex flex-col gap-3 flex-grow">
+                                        <p class="text-slate-700 leading-relaxed text-sm font-medium whitespace-pre-wrap">${idea.text}</p>
+                                        <div class="flex items-center gap-2">
+                                            ${idea.userPhoto ? `<img src="${idea.userPhoto}" class="w-4 h-4 rounded-full">` : `<div class="w-4 h-4 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400">${authorInitial}</div>`}
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">${idea.userName || 'Anonymous'}</span>
+                                        </div>
+                                    </div>
                                     <button onclick="voteIdea('${idea.id}', ${JSON.stringify(voters)})" 
                                         class="group flex flex-col items-center gap-1 min-w-[44px] p-2 rounded-xl transition-all ${hasVoted ? 'bg-orange-50' : 'hover:bg-slate-50'}">
                                         <i class="fa-heart ${hasVoted ? 'fas text-orange-500 scale-110' : 'far text-slate-300 group-hover:text-orange-400'} transition-all text-lg"></i>
