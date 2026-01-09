@@ -92,17 +92,29 @@
             </div>
 
             <!-- Auth Controls -->
-            <div id="authSection" class="flex items-center gap-3">
-                <button id="loginBtn" onclick="signInWithGoogle()" class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all card-shadow">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
-                    DDSB Login
-                </button>
-                <div id="userInfo" class="hidden items-center gap-3 user-pill px-4 py-2 rounded-xl shadow-sm">
-                    <div class="flex flex-col items-end">
-                        <span id="userName" class="text-xs font-bold text-slate-800 leading-none"></span>
-                        <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Verified Educator</span>
+            <div id="authSection" class="flex flex-col items-end gap-2">
+                <div class="flex items-center gap-3">
+                    <button id="loginBtn" onclick="signInWithGoogle()" class="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all card-shadow">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="Google">
+                        DDSB Login
+                    </button>
+                    <div id="userInfo" class="hidden items-center gap-3 user-pill px-4 py-2 rounded-xl shadow-sm">
+                        <div class="flex flex-col items-end">
+                            <span id="userName" class="text-xs font-bold text-slate-800 leading-none"></span>
+                            <span class="text-[9px] text-slate-500 uppercase tracking-tighter">Verified Educator</span>
+                        </div>
+                        <img id="userAvatar" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" src="" alt="">
                     </div>
-                    <img id="userAvatar" class="w-8 h-8 rounded-full border-2 border-white shadow-sm" src="" alt="">
+                </div>
+                <!-- Actionable Error Message for User -->
+                <div id="domainError" class="hidden max-w-sm bg-red-50 border border-red-200 p-3 rounded-xl shadow-sm">
+                    <p class="text-[10px] text-red-700 font-bold uppercase tracking-wider mb-1 flex items-center gap-2">
+                        <i class="fas fa-exclamation-triangle"></i> Auth Restriction
+                    </p>
+                    <p class="text-[11px] text-red-600 leading-tight">
+                        Login blocked by Firebase security. You must add <strong>googleusercontent.com</strong> (or the specific ID below) to your Firebase "Authorized Domains" list:
+                        <br><code id="currentDomain" class="bg-red-100 px-1 rounded font-mono text-[9px] break-all block mt-1 p-1"></code>
+                    </p>
                 </div>
             </div>
         </header>
@@ -173,7 +185,8 @@
             onAuthStateChanged, 
             signInWithCustomToken,
             GoogleAuthProvider,
-            signInWithPopup
+            signInWithRedirect,
+            getRedirectResult
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
@@ -199,7 +212,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // STATIC COLLECTION PATH: Locked to ensure everyone sees the same data
         const SHARED_APP_ID = 'ddsb-community-v1';
 
         const categoryConfigs = {
@@ -215,19 +227,44 @@
         let ideas = [];
         let unsubscribe = null;
 
-        // Login Function
+        // Switched to signInWithRedirect to avoid pop-up blockers
         window.signInWithGoogle = async () => {
             const provider = new GoogleAuthProvider();
-            // Force DDSB domain if desired (optional)
             provider.setCustomParameters({ hd: 'ddsb.ca' }); 
+            const errorEl = document.getElementById('domainError');
+            const domainCode = document.getElementById('currentDomain');
+            
+            errorEl.classList.add('hidden');
+
             try {
-                await signInWithPopup(auth, provider);
+                // Redirect is more reliable in iframes/secured environments
+                await signInWithRedirect(auth, provider);
             } catch (error) {
                 console.error("Login failed:", error);
+                if (error.code === 'auth/unauthorized-domain') {
+                    errorEl.classList.remove('hidden');
+                    domainCode.innerText = window.location.hostname;
+                }
+            }
+        };
+
+        // Handle the result of the redirect on page load
+        const handleRedirect = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    console.log("Logged in via redirect", result.user);
+                }
+            } catch (error) {
+                if (error.code === 'auth/unauthorized-domain') {
+                    document.getElementById('domainError').classList.remove('hidden');
+                    document.getElementById('currentDomain').innerText = window.location.hostname;
+                }
             }
         };
 
         const initAuth = async () => {
+            await handleRedirect();
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
@@ -236,7 +273,6 @@
                         await signInAnonymously(auth);
                     }
                 } else if (!auth.currentUser) {
-                    // Start as anonymous if not already logged in
                     await signInAnonymously(auth);
                 }
             } catch (err) {
@@ -248,6 +284,7 @@
             user = u;
             const loginBtn = document.getElementById('loginBtn');
             const userInfo = document.getElementById('userInfo');
+            const errorEl = document.getElementById('domainError');
             
             if (u && !u.isAnonymous) {
                 loginBtn.classList.add('hidden');
@@ -255,6 +292,7 @@
                 userInfo.classList.add('flex');
                 document.getElementById('userName').innerText = u.displayName;
                 document.getElementById('userAvatar').src = u.photoURL;
+                errorEl.classList.add('hidden');
             } else {
                 loginBtn.classList.remove('hidden');
                 userInfo.classList.add('hidden');
@@ -342,7 +380,7 @@
                 renderIdeas();
             }, (error) => {
                 console.error("Snapshot error:", error);
-                document.getElementById('emptyStateText').innerText = "DATABASE PERMISSION ERROR: Update Firestore Rules to match the ddsb-community-v1 path.";
+                document.getElementById('emptyStateText').innerText = "DATABASE PERMISSION ERROR: Ensure Firestore Rules allow access to 'ddsb-community-v1'.";
             });
         }
 
