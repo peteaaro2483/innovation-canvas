@@ -147,7 +147,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBJz-6i1LQZo5beHIJGFoVBkNA2wyUWEN4",
             authDomain: "generative-ai-in-education.firebaseapp.com",
@@ -197,15 +196,14 @@
 
         let user = null;
         let ideas = [];
+        let unsubscribe = null;
 
         const initAuth = async () => {
             try {
-                // Rule 3: Always authenticate before queries.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } catch (tokenErr) {
-                        console.warn("Custom token failed, falling back to anonymous:", tokenErr);
                         await signInAnonymously(auth);
                     }
                 } else {
@@ -214,8 +212,6 @@
             } catch (err) {
                 console.error("Auth error:", err);
                 const errorText = document.getElementById('emptyStateText');
-                
-                // Handle the configuration-not-found error specifically
                 if (err.code === 'auth/configuration-not-found') {
                     errorText.innerHTML = `
                         <div class="text-slate-800 font-bold mb-2 uppercase">Configuration Required</div>
@@ -266,10 +262,7 @@
         }
 
         window.submitIdea = async () => {
-            if (!user) {
-                console.error("User not authenticated");
-                return;
-            }
+            if (!user) return;
             const input = document.getElementById('ideaInput');
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
@@ -284,7 +277,6 @@
 
             try {
                 const category = determineCategory(text);
-                // Rule 1: Using strict path /artifacts/{appId}/public/data/{collection}
                 const col = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
                 await addDoc(col, {
                     text,
@@ -294,6 +286,7 @@
                     voters: [],
                     createdAt: Date.now()
                 });
+                
                 input.value = '';
                 showToast();
             } catch (err) { 
@@ -321,20 +314,26 @@
 
         function setupDataListener() {
             if (!user) return;
+            
+            // Clean up existing listener if any
+            if (unsubscribe) unsubscribe();
+
             try {
-                // Rule 1: Using strict path
+                // RULE 1 & 2: Use strict path and simple query
                 const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
-                // Rule 2: Simple query to avoid index requirement
                 const q = query(colRef); 
                 
-                onSnapshot(q, (snapshot) => {
-                    // Sorting in memory (JS) per Rule 2
+                unsubscribe = onSnapshot(q, (snapshot) => {
+                    // Fetch all existing data and sort in memory
                     ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Sorting by newest first
                     ideas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    
                     renderIdeas();
                 }, (error) => {
                     console.error("Snapshot error:", error);
-                    document.getElementById('emptyStateText').innerText = "FIRESTORE ERROR: Check Rules or Configuration";
+                    document.getElementById('emptyStateText').innerText = "DATA ERROR: Unable to load feed.";
                 });
             } catch (err) {
                 console.error("Setup listener error:", err);
@@ -347,14 +346,10 @@
             const countDisplay = document.getElementById('insightCount');
 
             countDisplay.innerText = `${ideas.length} Insight${ideas.length === 1 ? '' : 's'}`;
+            
             if (ideas.length === 0) {
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
-                // Only reset text if it's not showing a specific error
-                const errorText = document.getElementById('emptyStateText');
-                if (errorText.innerText === "CONNECTING TO FEED...") {
-                    errorText.innerText = "NO INSIGHTS YET. BE THE FIRST TO SHARE!";
-                }
                 return;
             }
 
@@ -367,13 +362,13 @@
             }, {});
 
             container.innerHTML = '';
-            const sorted = Object.keys(groups).sort((a, b) => {
+            const sortedCategories = Object.keys(groups).sort((a, b) => {
                 if (a === "General Insights") return 1;
                 if (b === "General Insights") return -1;
                 return a.localeCompare(b);
             });
 
-            sorted.forEach(category => {
+            sortedCategories.forEach(category => {
                 const config = categoryConfigs[category] || categoryConfigs["General Insights"];
                 const section = document.createElement('div');
                 section.className = 'animate-in fade-in slide-in-from-bottom-2 duration-500 mb-10';
