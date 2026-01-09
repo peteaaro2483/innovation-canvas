@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDSB Educator AI Insights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --ddsb-navy: #002B54;
+            --ddsb-yellow: #FFB81C;
+            --ddsb-orange: #F58220;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+
+        .ddsb-bg-navy { background-color: var(--ddsb-navy); }
+        .ddsb-text-navy { color: var(--ddsb-navy); }
+        .ddsb-border-yellow { border-color: var(--ddsb-yellow); }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+
+        .idea-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .idea-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -5px rgba(0, 43, 84, 0.08);
+        }
+
+        .btn-primary {
+            background-color: var(--ddsb-navy);
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #001f3d;
+            transform: translateY(-1px);
+        }
+
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Category specific color utilities */
+        .border-planning { border-left-color: #2563eb; }
+        .border-assessment { border-left-color: #1e293b; }
+        .border-productivity { border-left-color: #4f46e5; }
+        .border-inclusivity { border-left-color: #f97316; }
+        .border-pedagogy { border-left-color: #0891b2; }
+        .border-general { border-left-color: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        <!-- Header -->
+        <header class="mb-12 flex flex-col md:flex-row items-center gap-6">
+            <div class="logo-container">
+                <img 
+                    src="https://www.ddsb.ca/en/images/structure/logo.svg" 
+                    alt="DDSB Logo" 
+                    class="h-16 w-auto object-contain"
+                    onerror="this.onerror=null; this.src='https://via.placeholder.com/200x80?text=DDSB+Logo';"
+                >
+            </div>
+            <div class="text-center md:text-left border-l-0 md:border-l-2 md:pl-6 border-slate-200">
+                <h1 class="text-3xl font-extrabold ddsb-text-navy tracking-tight">
+                    AI Insights for <span class="text-blue-600">Educators</span>
+                </h1>
+                <p class="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1 flex items-center justify-center md:justify-start gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full ddsb-bg-navy"></span>
+                    Ignite Learning • Global Community Feed
+                </p>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white p-6 rounded-2xl card-shadow border-t-8 ddsb-border-yellow sticky top-8">
+                    <h2 class="text-lg font-bold mb-4 ddsb-text-navy flex items-center gap-2">
+                        <i class="fas fa-lightbulb text-yellow-500"></i> Share an Insight
+                    </h2>
+                    <div class="space-y-4">
+                        <textarea 
+                            id="ideaInput" 
+                            class="w-full h-40 p-4 rounded-xl border border-slate-200 focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none resize-none text-slate-700 placeholder:text-slate-400 text-sm bg-slate-50 transition-all"
+                            placeholder="Example: 'Create a literacy centre prompt for Grade 3 focused on phonics...'"></textarea>
+                        
+                        <button 
+                            id="submitBtn"
+                            onclick="submitIdea()"
+                            class="w-full btn-primary text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 shadow-lg disabled:opacity-50 active:scale-95">
+                            <span id="btnText">Post to Community Feed</span>
+                            <div id="btnLoader" class="loader hidden"></div>
+                        </button>
+                    </div>
+
+                    <div class="mt-8 border-t border-slate-100 pt-6">
+                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Color Map</h3>
+                        <div id="categoryKey" class="space-y-2.5">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="lg:col-span-8">
+                <div class="flex items-center justify-between mb-8 px-2">
+                    <h2 class="text-xl font-extrabold text-slate-800">Live Knowledge Stream</h2>
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full" id="insightCount">0 Insights</div>
+                </div>
+
+                <div id="emptyState" class="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                    <div class="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-terminal text-2xl text-slate-200"></i>
+                    </div>
+                    <p class="text-slate-400 font-bold text-sm tracking-wide">CONNECTING TO FEED...</p>
+                </div>
+
+                <div id="ideaGroupsContainer" class="space-y-12">
+                    <!-- Categories and Ideas here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 ddsb-bg-navy text-white px-8 py-5 rounded-2xl shadow-2xl opacity-0 pointer-events-none transition-all duration-500 translate-y-10 flex items-center gap-4 border-b-4 ddsb-border-yellow z-50">
+        <i class="fas fa-check-circle text-yellow-400 text-xl"></i>
+        <p class="text-sm font-bold">Insight Live for All Educators!</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ddsb-community-v1';
+
+        const categoryConfigs = {
+            "Lesson Planning": {
+                color: "#2563eb",
+                class: "planning",
+                keywords: ["plan", "unit", "lesson", "syllabus", "outline", "prep", "resource", "worksheet", "activity", "centre", "center", "literacy", "numeracy", "long range", "learning goal", "success criteria"],
+                icon: "fa-calendar-day"
+            },
+            "Assessment & Feedback": {
+                color: "#1e293b",
+                class: "assessment",
+                keywords: ["assess", "feedback", "grade", "rubric", "quiz", "test", "marking", "comment", "eval", "diagnostic", "formative", "summative", "report card", "check-in"],
+                icon: "fa-check-double"
+            },
+            "Productivity & Admin": {
+                color: "#4f46e5",
+                class: "productivity",
+                keywords: ["email", "admin", "schedule", "task", "organize", "report", "template", "form", "meeting", "workflow", "communication", "newsletter", "documentation"],
+                icon: "fa-bolt"
+            },
+            "Student Needs & Inclusivity": {
+                color: "#f97316",
+                class: "inclusivity",
+                keywords: ["student", "ell", "iep", "differen", "inclusive", "need", "support", "diverse", "equity", "accessibility", "udl", "spec ed", "accommodation", "modification", "multilingual"],
+                icon: "fa-hand-holding-heart"
+            },
+            "Pedagogy & Curriculum": {
+                color: "#0891b2",
+                class: "pedagogy",
+                keywords: ["teach", "learning", "concept", "theory", "scaffold", "classroom", "curriculum", "inquiry", "spiral", "social justice", "engagement", "higher order", "bloom"],
+                icon: "fa-graduation-cap"
+            },
+            "General Insights": {
+                color: "#94a3b8",
+                class: "general",
+                keywords: [],
+                icon: "fa-lightbulb"
+            }
+        };
+
+        let user = null;
+        let ideas = [];
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        };
+
+        onAuthStateChanged(auth, (u) => {
+            user = u;
+            if (u) setupDataListener();
+        });
+
+        initAuth();
+
+        const renderCategoryKey = () => {
+            const container = document.getElementById('categoryKey');
+            Object.entries(categoryConfigs).forEach(([name, config]) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-3 text-[11px] font-bold text-slate-600";
+                item.innerHTML = `
+                    <div class="w-2.5 h-2.5 rounded-full shadow-sm" style="background-color: ${config.color}"></div>
+                    <span>${name}</span>
+                `;
+                container.appendChild(item);
+            });
+        };
+        renderCategoryKey();
+
+        function determineCategory(text) {
+            const lowerText = text.toLowerCase();
+            // Pedagogical Engine: Prioritize specific high-impact terms
+            if (lowerText.includes("centre") || lowerText.includes("center") || lowerText.includes("literacy") || lowerText.includes("numeracy")) {
+                return "Lesson Planning";
+            }
+            
+            for (const [category, config] of Object.entries(categoryConfigs)) {
+                if (config.keywords.some(k => lowerText.includes(k))) return category;
+            }
+            return "General Insights";
+        }
+
+        window.submitIdea = async () => {
+            if (!user) return;
+            const input = document.getElementById('ideaInput');
+            const btn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const text = input.value.trim();
+
+            if (!text || text.length < 5) return;
+
+            btn.disabled = true;
+            btnText.classList.add('hidden');
+            btnLoader.classList.remove('hidden');
+
+            try {
+                const category = determineCategory(text);
+                const col = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
+                await addDoc(col, {
+                    text,
+                    category,
+                    userId: user.uid,
+                    votes: 0,
+                    voters: [],
+                    createdAt: Date.now()
+                });
+                input.value = '';
+                showToast();
+            } catch (err) { console.error("Write error:", err); }
+            finally {
+                btn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnLoader.classList.add('hidden');
+            }
+        };
+
+        window.voteIdea = async (id, currentVoters) => {
+            if (!user || (currentVoters && currentVoters.includes(user.uid))) return;
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'insights', id);
+            try {
+                await updateDoc(ref, {
+                    votes: increment(1),
+                    voters: [...(currentVoters || []), user.uid]
+                });
+            } catch (err) { console.error("Vote error:", err); }
+        };
+
+        function setupDataListener() {
+            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'insights'), orderBy('createdAt', 'desc'));
+            onSnapshot(q, (snapshot) => {
+                ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderIdeas();
+            }, (error) => {
+                console.error("Snapshot error:", error);
+            });
+        }
+
+        function renderIdeas() {
+            const container = document.getElementById('ideaGroupsContainer');
+            const emptyState = document.getElementById('emptyState');
+            const countDisplay = document.getElementById('insightCount');
+
+            countDisplay.innerText = `${ideas.length} Insight${ideas.length === 1 ? '' : 's'}`;
+            if (ideas.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            const groups = ideas.reduce((acc, idea) => {
+                if (!acc[idea.category]) acc[idea.category] = [];
+                acc[idea.category].push(idea);
+                return acc;
+            }, {});
+
+            container.innerHTML = '';
+            const sorted = Object.keys(groups).sort((a, b) => a === "General Insights" ? 1 : b === "General Insights" ? -1 : a.localeCompare(b));
+
+            sorted.forEach(category => {
+                const config = categoryConfigs[category] || categoryConfigs["General Insights"];
+                const section = document.createElement('div');
+                section.className = 'animate-in fade-in slide-in-from-bottom-2 duration-500';
+                
+                section.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4 px-2">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white" style="background-color: ${config.color}">
+                            <i class="fas ${config.icon} text-xs"></i>
+                        </div>
+                        <h3 class="text-[10px] font-black text-slate-800 uppercase tracking-[0.15em]">${category}</h3>
+                        <div class="h-[1px] bg-slate-200 flex-grow ml-2"></div>
+                    </div>
+                    <div class="space-y-4">
+                        ${groups[category].map(idea => {
+                            const hasVoted = idea.voters && idea.voters.includes(user?.uid);
+                            return `
+                                <div class="idea-card bg-white p-5 rounded-2xl border border-slate-200 flex items-start justify-between gap-6 card-shadow border-l-4 border-${config.class}">
+                                    <p class="text-slate-700 leading-relaxed text-sm font-medium whitespace-pre-wrap flex-grow">${idea.text}</p>
+                                    <button onclick="voteIdea('${idea.id}', ${JSON.stringify(idea.voters || [])})" 
+                                        class="group flex flex-col items-center gap-1 min-w-[44px] p-2 rounded-xl transition-all ${hasVoted ? 'bg-orange-50' : 'hover:bg-slate-50'}">
+                                        <i class="fa-heart ${hasVoted ? 'fas text-orange-500 scale-110' : 'far text-slate-300 group-hover:text-orange-400'} transition-all text-lg"></i>
+                                        <span class="text-[11px] font-black ${hasVoted ? 'text-orange-600' : 'text-slate-400'}">${idea.votes || 0}</span>
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(1rem)';
+            }, 3000);
+        }
+
+        window.addEventListener('load', () => {
+            document.getElementById('ideaInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    window.submitIdea();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
