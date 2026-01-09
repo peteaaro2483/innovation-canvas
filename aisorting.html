@@ -147,11 +147,8 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, doc, updateDoc, increment, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        /**
-         * MANUAL DATABASE LINKING INSTRUCTIONS:
-         * Your Firebase credentials are now correctly structured below.
-         */
-        const manualConfig = {
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
             apiKey: "AIzaSyBJz-6i1LQZo5beHIJGFoVBkNA2wyUWEN4",
             authDomain: "generative-ai-in-education.firebaseapp.com",
             projectId: "generative-ai-in-education",
@@ -159,8 +156,6 @@
             messagingSenderId: "419951479544",
             appId: "1:419951479544:web:ed084035da7aa37081490d"
         };
-
-        const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : manualConfig;
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -205,27 +200,48 @@
 
         const initAuth = async () => {
             try {
+                // Rule 3: Always authenticate before queries.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (tokenErr) {
+                        console.warn("Custom token failed, falling back to anonymous:", tokenErr);
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
                 console.error("Auth error:", err);
-                document.getElementById('emptyStateText').innerText = "CONNECTION ERROR: Provide Firebase Config";
+                const errorText = document.getElementById('emptyStateText');
+                
+                // Handle the configuration-not-found error specifically
+                if (err.code === 'auth/configuration-not-found') {
+                    errorText.innerHTML = `
+                        <div class="text-slate-800 font-bold mb-2 uppercase">Configuration Required</div>
+                        <div class="text-xs text-slate-500 mb-4 px-8 leading-relaxed">
+                            Anonymous Sign-In must be enabled in your Firebase Console.<br>
+                            Go to <b>Authentication > Sign-in method</b> and enable <b>Anonymous</b>.
+                        </div>
+                    `;
+                } else {
+                    errorText.innerText = "AUTH ERROR: " + err.message;
+                }
             }
         };
 
         onAuthStateChanged(auth, (u) => {
             user = u;
-            if (u) setupDataListener();
+            if (u) {
+                setupDataListener();
+            }
         });
 
         initAuth();
 
         const renderCategoryKey = () => {
             const container = document.getElementById('categoryKey');
-            container.innerHTML = ''; // Clear before render
+            container.innerHTML = ''; 
             Object.entries(categoryConfigs).forEach(([name, config]) => {
                 const item = document.createElement('div');
                 item.className = "flex items-center gap-3 text-[11px] font-bold text-slate-600";
@@ -250,7 +266,10 @@
         }
 
         window.submitIdea = async () => {
-            if (!user) return;
+            if (!user) {
+                console.error("User not authenticated");
+                return;
+            }
             const input = document.getElementById('ideaInput');
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('btnText');
@@ -265,6 +284,7 @@
 
             try {
                 const category = determineCategory(text);
+                // Rule 1: Using strict path /artifacts/{appId}/public/data/{collection}
                 const col = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
                 await addDoc(col, {
                     text,
@@ -286,25 +306,39 @@
         };
 
         window.voteIdea = async (id, currentVoters) => {
-            if (!user || (currentVoters && currentVoters.includes(user.uid))) return;
+            if (!user) return;
+            const voterList = Array.isArray(currentVoters) ? currentVoters : [];
+            if (voterList.includes(user.uid)) return;
+
             const ref = doc(db, 'artifacts', appId, 'public', 'data', 'insights', id);
             try {
                 await updateDoc(ref, {
                     votes: increment(1),
-                    voters: [...(currentVoters || []), user.uid]
+                    voters: [...voterList, user.uid]
                 });
             } catch (err) { console.error("Vote error:", err); }
         };
 
         function setupDataListener() {
-            const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'insights'), orderBy('createdAt', 'desc'));
-            onSnapshot(q, (snapshot) => {
-                ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderIdeas();
-            }, (error) => {
-                console.error("Snapshot error:", error);
-                document.getElementById('emptyStateText').innerText = "DATABASE ERROR: Set Firestore Rules to Public";
-            });
+            if (!user) return;
+            try {
+                // Rule 1: Using strict path
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'insights');
+                // Rule 2: Simple query to avoid index requirement
+                const q = query(colRef); 
+                
+                onSnapshot(q, (snapshot) => {
+                    // Sorting in memory (JS) per Rule 2
+                    ideas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    ideas.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                    renderIdeas();
+                }, (error) => {
+                    console.error("Snapshot error:", error);
+                    document.getElementById('emptyStateText').innerText = "FIRESTORE ERROR: Check Rules or Configuration";
+                });
+            } catch (err) {
+                console.error("Setup listener error:", err);
+            }
         }
 
         function renderIdeas() {
@@ -316,24 +350,33 @@
             if (ideas.length === 0) {
                 container.innerHTML = '';
                 emptyState.classList.remove('hidden');
-                document.getElementById('emptyStateText').innerText = "NO INSIGHTS YET. BE THE FIRST TO SHARE!";
+                // Only reset text if it's not showing a specific error
+                const errorText = document.getElementById('emptyStateText');
+                if (errorText.innerText === "CONNECTING TO FEED...") {
+                    errorText.innerText = "NO INSIGHTS YET. BE THE FIRST TO SHARE!";
+                }
                 return;
             }
 
             emptyState.classList.add('hidden');
             const groups = ideas.reduce((acc, idea) => {
-                if (!acc[idea.category]) acc[idea.category] = [];
-                acc[idea.category].push(idea);
+                const cat = idea.category || "General Insights";
+                if (!acc[cat]) acc[cat] = [];
+                acc[cat].push(idea);
                 return acc;
             }, {});
 
             container.innerHTML = '';
-            const sorted = Object.keys(groups).sort((a, b) => a === "General Insights" ? 1 : b === "General Insights" ? -1 : a.localeCompare(b));
+            const sorted = Object.keys(groups).sort((a, b) => {
+                if (a === "General Insights") return 1;
+                if (b === "General Insights") return -1;
+                return a.localeCompare(b);
+            });
 
             sorted.forEach(category => {
                 const config = categoryConfigs[category] || categoryConfigs["General Insights"];
                 const section = document.createElement('div');
-                section.className = 'animate-in fade-in slide-in-from-bottom-2 duration-500';
+                section.className = 'animate-in fade-in slide-in-from-bottom-2 duration-500 mb-10';
                 
                 section.innerHTML = `
                     <div class="flex items-center gap-3 mb-4 px-2">
@@ -345,11 +388,12 @@
                     </div>
                     <div class="space-y-4">
                         ${groups[category].map(idea => {
-                            const hasVoted = idea.voters && idea.voters.includes(user?.uid);
+                            const voters = Array.isArray(idea.voters) ? idea.voters : [];
+                            const hasVoted = voters.includes(user?.uid);
                             return `
                                 <div class="idea-card bg-white p-5 rounded-2xl border border-slate-200 flex items-start justify-between gap-6 card-shadow border-l-4" style="border-left-color: ${config.color}">
                                     <p class="text-slate-700 leading-relaxed text-sm font-medium whitespace-pre-wrap flex-grow">${idea.text}</p>
-                                    <button onclick="voteIdea('${idea.id}', ${JSON.stringify(idea.voters || [])})" 
+                                    <button onclick="voteIdea('${idea.id}', ${JSON.stringify(voters)})" 
                                         class="group flex flex-col items-center gap-1 min-w-[44px] p-2 rounded-xl transition-all ${hasVoted ? 'bg-orange-50' : 'hover:bg-slate-50'}">
                                         <i class="fa-heart ${hasVoted ? 'fas text-orange-500 scale-110' : 'far text-slate-300 group-hover:text-orange-400'} transition-all text-lg"></i>
                                         <span class="text-[11px] font-black ${hasVoted ? 'text-orange-600' : 'text-slate-400'}">${idea.votes || 0}</span>
@@ -367,19 +411,24 @@
             const toast = document.getElementById('toast');
             toast.style.opacity = '1';
             toast.style.transform = 'translateY(0)';
+            toast.style.pointerEvents = 'auto';
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(1rem)';
+                toast.style.pointerEvents = 'none';
             }, 3000);
         }
 
         window.addEventListener('load', () => {
-            document.getElementById('ideaInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    window.submitIdea();
-                }
-            });
+            const input = document.getElementById('ideaInput');
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        window.submitIdea();
+                    }
+                });
+            }
         });
     </script>
 </body>
