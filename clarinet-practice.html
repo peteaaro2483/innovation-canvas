@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clarinet Practice: Scale Builder</title>
+    <style>
+        :root {
+            --primary: #d35400; /* Pumpkin/Wood Orange */
+            --accent: #e67e22;  /* Carrot Orange */
+            --success: #27ae60;
+            --bg: #fbeee6;      /* Very pale orange/brown */
+            --surface: #ffffff;
+            --key-border: #6e2c00; /* Dark Wood */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .container {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        /* Mode Toggle */
+        .mode-selector {
+            background: #edbb99; 
+            padding: 5px;
+            border-radius: 8px;
+            display: inline-flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6e2c00;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button.control-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button.control-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button.control-btn.active {
+            background-color: var(--accent);
+            font-weight: bold;
+            border: 2px solid #a04000;
+        }
+
+        button.control-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            border: none;
+        }
+
+        /* Display Area */
+        .display-area {
+            position: relative;
+            height: 250px;
+            margin: 20px auto;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            color: var(--success);
+            z-index: 10;
+            border-radius: 8px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #staffCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Clarinet Keys Visualization */
+        .keys-container {
+            margin-top: 15px;
+        }
+
+        .clarinet-graphic {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: flex-start;
+            background: #eee;
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 2px solid #bdc3c7;
+        }
+
+        .col-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .col-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            margin-bottom: 2px;
+        }
+
+        .key {
+            width: 28px;
+            height: 28px;
+            border: 2px solid var(--key-border);
+            border-radius: 50%;
+            background: white;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #aaa;
+            font-weight: bold;
+        }
+
+        .key.pressed {
+            background: var(--primary);
+            color: white;
+        }
+
+        .key.tear {
+            border-radius: 50% 50% 0 50%;
+            transform: rotate(45deg);
+            width: 24px;
+            height: 24px;
+        }
+        
+        .key.rect {
+            border-radius: 4px;
+            width: 30px;
+            height: 15px;
+        }
+
+        .spacer {
+            height: 10px;
+        }
+
+        /* Feedback UI */
+        .feedback {
+            font-size: 1.2rem;
+            height: 30px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .listening-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #bdc3c7;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .listening-indicator.active {
+            background-color: var(--success);
+            animation: pulse 1s infinite;
+        }
+
+        .success-msg {
+            color: var(--success);
+            animation: bounce 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        #pitch-debug {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            visibility: hidden;
+        }
+
+        .instructions {
+            background-color: #f6ddcc; /* Pale Orange */
+            color: #6e2c00;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            border: 1px solid #e59866;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎶 Clarinet Scale Builder</h1>
+    
+    <div class="instructions" id="messageBox">
+        Click "Start Microphone" to begin. Ensure you are in a quiet room.
+    </div>
+
+    <!-- Range Selector -->
+    <div class="mode-selector">
+        <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes</button>
+        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Octave)</button>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" id="btnStart" onclick="startAudioContext()">🎤 Start Microphone</button>
+        <button class="control-btn" id="btnLvl1" onclick="setLevel(1)" disabled>Level 1: Order + Help</button>
+        <button class="control-btn" id="btnLvl2" onclick="setLevel(2)" disabled>Level 2: Order Only</button>
+        <button class="control-btn" id="btnLvl3" onclick="setLevel(3)" disabled>Level 3: Random + Help</button>
+        <button class="control-btn" id="btnLvl4" onclick="setLevel(4)" disabled>Level 4: Challenge</button>
+    </div>
+
+    <div class="display-area">
+        <div id="successOverlay" class="overlay">✅</div>
+        <canvas id="staffCanvas" width="600" height="200"></canvas>
+    </div>
+
+    <!-- UDL: Visual Fingering Representation (Clarinet) -->
+    <div class="keys-container" id="fingeringDisplay">
+        <div class="clarinet-graphic">
+            
+            <!-- Back Keys (Thumb) -->
+            <div class="col-group">
+                <div class="col-label">Back</div>
+                <div class="key tear" id="k-reg" title="Register Key">R</div>
+                <div class="key" id="k-th" title="Thumb Hole">Th</div>
+            </div>
+
+            <div style="width: 1px; background: #ccc; height: 100px;"></div>
+
+            <!-- Left Hand -->
+            <div class="col-group">
+                <div class="col-label">Left</div>
+                <div class="key tear" id="k-a" title="A Key">A</div>
+                <div class="key" id="k-l1">1</div>
+                <div class="key" id="k-l2">2</div>
+                <div class="key" id="k-l3">3</div>
+                <div class="key rect" id="k-lp" title="Pinky">Pk</div>
+            </div>
+
+            <!-- Right Hand -->
+            <div class="col-group">
+                <div class="col-label">Right</div>
+                <div class="spacer"></div> <!-- Align with holes -->
+                <div class="key" id="k-r1">1</div>
+                <div class="key" id="k-r2">2</div>
+                <div class="key" id="k-r3">3</div>
+                <div class="key rect" id="k-rp" title="Pinky">Pk</div>
+            </div>
+
+        </div>
+        <div class="valve-label" style="margin-top:5px; color:#7f8c8d;">Fingerings</div>
+    </div>
+
+    <div class="feedback">
+        <span class="listening-indicator" id="indicator"></span>
+        <span id="feedbackText">Waiting to start...</span>
+    </div>
+
+    <div id="pitch-debug">Detected: -- Hz</div>
+</div>
+
+<script>
+    // --- Configuration & Data ---
+    // CLARINET: Bb Transposing Instrument (Same Pitch as Trumpet).
+    // Written C4 = Sounding Bb3.
+    // Scale: Written C Major (Concert Bb Major).
+    
+    // Key Map Array Index: 
+    // [Register, Thumb, A_Key, L1, L2, L3, R1, R2, R3, LPinky, RPinky]
+    // Note: Pinkies are simplified (Generic Pinky indicator).
+
+    const FULL_SCALE = [
+        // Written C4 (Low C) - Thumb, 123, 123, Pinky (usually Left F/C or Right)
+        // [Reg, Th, A, L1, L2, L3, R1, R2, R3, LP, RP]
+        { name: "C", octave: 4, frequency: 233.08, keys: [0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1] }, 
+
+        // Written D4 - Thumb, 123, 123
+        { name: "D", octave: 4, frequency: 261.63, keys: [0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0] },
+
+        // Written E4 - Thumb, 123, 12
+        { name: "E", octave: 4, frequency: 293.66, keys: [0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0] },
+
+        // Written F4 - Thumb, 123, 1
+        { name: "F", octave: 4, frequency: 311.13, keys: [0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0] },
+
+        // Written G4 - Open (Nothing pressed)
+        { name: "G", octave: 4, frequency: 349.23, keys: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+
+        // Written A4 - "A" Key (Throat tone)
+        { name: "A", octave: 4, frequency: 392.00, keys: [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0] },
+
+        // Written B4 - Crossing the Break. 
+        // Using "Long B" (Reg + Th + 123 + 123) for scale context usually, or B natural is Reg+Th+123+123 (minus pinky). 
+        // Let's use the standard B Natural fingering: Reg + Th + L123 + R123.
+        { name: "B", octave: 4, frequency: 440.00, keys: [1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0] },
+
+        // Written C5 - Reg + Th + 123 + 123 + Pinky
+        { name: "C", octave: 5, frequency: 466.16, keys: [1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1] }  
+    ];
+
+    // Application State
+    let audioContext;
+    let analyser;
+    let microphone;
+    let buflen = 2048;
+    let buf = new Float32Array(buflen);
+    let isListening = false;
+    
+    let currentLevel = 1;
+    let currentRange = 5; // 5 or 8
+    let activeNotes = FULL_SCALE.slice(0, 5);
+    
+    let currentNoteIndex = 0;
+    let currentNote = activeNotes[0];
+    let noteHeldFrames = 0; 
+    const FRAMES_REQUIRED = 20; // Approx 0.33 seconds
+    let processingSuccess = false; 
+
+    // UI Elements
+    const canvas = document.getElementById('staffCanvas');
+    const ctx = canvas.getContext('2d');
+    const feedbackText = document.getElementById('feedbackText');
+    const debugText = document.getElementById('pitch-debug');
+    const indicator = document.getElementById('indicator');
+    const fingeringDisplay = document.getElementById('fingeringDisplay');
+    
+    // Key Elements Map
+    // [Reg, Th, A, L1, L2, L3, R1, R2, R3, LP, RP]
+    const keyIds = ['k-reg', 'k-th', 'k-a', 'k-l1', 'k-l2', 'k-l3', 'k-r1', 'k-r2', 'k-r3', 'k-lp', 'k-rp'];
+
+    // --- Mode Selection ---
+    function setRange(range) {
+        currentRange = range;
+        
+        // UI Toggle
+        document.getElementById('mode5').classList.toggle('active', range === 5);
+        document.getElementById('mode8').classList.toggle('active', range === 8);
+
+        // Update Data
+        activeNotes = (range === 5) ? FULL_SCALE.slice(0, 5) : FULL_SCALE;
+        
+        // Reset Level to restart progression
+        if(isListening) {
+            setLevel(currentLevel);
+        }
+    }
+
+    // --- Audio System ---
+    
+    async function startAudioContext() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+
+            isListening = true;
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('messageBox').innerText = "Microphone active. Play the note shown on the staff!";
+            document.getElementById('messageBox').style.backgroundColor = "#d4edda";
+            document.getElementById('messageBox').style.color = "#155724";
+            
+            // Enable level buttons
+            [1, 2, 3, 4].forEach(i => document.getElementById(`btnLvl${i}`).disabled = false);
+            
+            setLevel(1);
+            indicator.classList.add('active');
+            updatePitch();
+        } catch (err) {
+            alert("Could not access microphone. Please allow permissions. Error: " + err);
+        }
+    }
+
+    // Autocorrelation algorithm
+    function autoCorrelate(buf, sampleRate) {
+        let SIZE = buf.length;
+        let rms = 0;
+
+        for (let i = 0; i < SIZE; i++) {
+            let val = buf[i];
+            rms += val * val;
+        }
+        rms = Math.sqrt(rms / SIZE);
+
+        if (rms < 0.015) return -1; 
+
+        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) {
+            if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+        }
+        for (let i = 1; i < SIZE / 2; i++) {
+            if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+        }
+
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+
+        let c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) {
+            for (let j = 0; j < SIZE - i; j++) {
+                c[i] = c[i] + buf[j] * buf[j + i];
+            }
+        }
+
+        let d = 0; while (c[d] > c[d + 1]) d++;
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) {
+            if (c[i] > maxval) {
+                maxval = c[i];
+                maxpos = i;
+            }
+        }
+        let T0 = maxpos;
+
+        let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+        let a = (x1 + x3 - 2 * x2) / 2;
+        let b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+
+        return sampleRate / T0;
+    }
+
+    function updatePitch() {
+        if (!isListening) return;
+
+        analyser.getFloatTimeDomainData(buf);
+        let pitch = autoCorrelate(buf, audioContext.sampleRate);
+
+        if (pitch !== -1) {
+            debugText.innerText = `Detected: ${Math.round(pitch)} Hz`;
+            checkNote(pitch);
+        } else {
+            noteHeldFrames = 0; // Reset if silence
+        }
+
+        requestAnimationFrame(updatePitch);
+    }
+
+    // --- Game Logic ---
+
+    function setLevel(lvl) {
+        currentLevel = lvl;
+        
+        // Update Buttons
+        document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btnLvl${lvl}`).classList.add('active');
+
+        // Logic reset
+        currentNoteIndex = 0;
+        
+        // Visibility of scaffolding
+        if (lvl === 2 || lvl === 4) {
+            fingeringDisplay.classList.add('hidden');
+        } else {
+            fingeringDisplay.classList.remove('hidden');
+        }
+
+        feedbackText.innerText = `Level ${lvl} Started! Play:`;
+        feedbackText.className = "feedback";
+        
+        loadNextNote();
+    }
+
+    function loadNextNote() {
+        if (currentLevel === 1 || currentLevel === 2) {
+            if (currentNoteIndex >= activeNotes.length) currentNoteIndex = 0;
+            currentNote = activeNotes[currentNoteIndex];
+        } else {
+            let randomIndex = Math.floor(Math.random() * activeNotes.length);
+            currentNote = activeNotes[randomIndex];
+        }
+
+        drawStaff();
+        updateKeys();
+    }
+
+    function updateKeys() {
+        const k = currentNote.keys;
+        
+        keyIds.forEach((id, index) => {
+            const el = document.getElementById(id);
+            if (k[index] === 1) {
+                el.classList.add('pressed');
+            } else {
+                el.classList.remove('pressed');
+            }
+        });
+    }
+
+    function checkNote(freq) {
+        if (processingSuccess) return; 
+
+        // Tolerance: +/- 4%
+        const target = currentNote.frequency;
+        const tolerance = target * 0.04; 
+
+        if (freq > target - tolerance && freq < target + tolerance) {
+            noteHeldFrames++;
+            feedbackText.innerText = "Hold it...";
+            feedbackText.style.color = "orange";
+            
+            if (noteHeldFrames > FRAMES_REQUIRED) {
+                processingSuccess = true; 
+                feedbackText.innerText = "Correct!";
+                feedbackText.className = "feedback success-msg";
+                document.getElementById('successOverlay').style.display = 'flex'; 
+                
+                noteHeldFrames = 0;
+                
+                setTimeout(() => {
+                    document.getElementById('successOverlay').style.display = 'none'; 
+                    feedbackText.innerText = "Play..."; 
+                    feedbackText.style.color = "var(--primary)";
+                    
+                    if (currentLevel <= 2) currentNoteIndex++;
+                    loadNextNote();
+                    
+                    processingSuccess = false; 
+                }, 2000); 
+            }
+        } else {
+            noteHeldFrames = Math.max(0, noteHeldFrames - 1); 
+        }
+    }
+
+    // --- Canvas Drawing ---
+
+    function drawStaff() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const startX = 50;
+        const endX = 550;
+        const lineSpacing = 20;
+        const staffTop = 80;
+
+        // Draw 5 lines
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            let y = staffTop + (i * lineSpacing);
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+            ctx.stroke();
+        }
+
+        // Draw Treble Clef
+        ctx.font = "60px serif";
+        ctx.fillStyle = "#000";
+        ctx.fillText("𝄞", startX + 10, staffTop + 70);
+
+        drawNoteHead(currentNote);
+    }
+
+    function drawNoteHead(note) {
+        const staffTop = 80;
+        const lineSpacing = 20;
+        const centerX = 300;
+        
+        let yPos;
+        let needsLedger = false;
+
+        // Note: Written Pitch for Clarinet
+        // Top Line (F5): staffTop 
+        // Bottom Line (E4): staffTop + 4*spacing
+        
+        switch(note.name) {
+            case 'C': 
+                if (note.octave === 5) {
+                   // C5: 3rd Space (from bottom). staffTop + 1.5 * spacing ?
+                   // F5 (top line) = 80. E5 (space) = 90. D5 (line) = 100. C5 (space) = 110.
+                   yPos = staffTop + 30; // 1.5 spaces
+                } else {
+                   // C4: Ledger line below.
+                   yPos = staffTop + (5 * lineSpacing);
+                   needsLedger = true;
+                }
+                break;
+            case 'D': // D4: Space below staff.
+                yPos = staffTop + (4.5 * lineSpacing);
+                break;
+            case 'E': // E4: Bottom line.
+                yPos = staffTop + (4 * lineSpacing); 
+                break;
+            case 'F': // F4: 1st space.
+                yPos = staffTop + (3.5 * lineSpacing);
+                break;
+            case 'G': // G4: 2nd line.
+                yPos = staffTop + (3 * lineSpacing);
+                break;
+            case 'A': // A4: 2nd Space.
+                yPos = staffTop + (2.5 * lineSpacing);
+                break;
+            case 'B': // B4: 3rd Line (Middle line).
+                yPos = staffTop + (2 * lineSpacing);
+                break;
+        }
+
+        // Draw Note Head
+        ctx.beginPath();
+        ctx.ellipse(centerX, yPos, 12, 10, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // Draw Stem
+        // On or above B4 -> Stem Down
+        let stemDown = false;
+        if (note.name === 'B' || (note.name === 'C' && note.octave === 5)) {
+            stemDown = true;
+        }
+
+        ctx.beginPath();
+        if (stemDown) {
+            ctx.moveTo(centerX - 11, yPos);
+            ctx.lineTo(centerX - 11, yPos + 50);
+        } else {
+            ctx.moveTo(centerX + 11, yPos);
+            ctx.lineTo(centerX + 11, yPos - 50);
+        }
+        ctx.stroke();
+
+        if (needsLedger) {
+            ctx.beginPath();
+            ctx.moveTo(centerX - 20, yPos);
+            ctx.lineTo(centerX + 20, yPos);
+            ctx.stroke();
+        }
+
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#d35400";
+        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
+    }
+
+    drawStaff();
+
+</script>
+</body>
+</html>
