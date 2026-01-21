@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Practice Studio</title>
+    <style>
+        :root {
+            --bg: #f4f6f7;
+            --text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* Card Styles */
+        .card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            text-decoration: none;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .card-content {
+            z-index: 1;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            opacity: 0.3;
+            position: absolute;
+            right: 20px;
+            bottom: -10px;
+            transform: rotate(-10deg);
+        }
+
+        /* Instrument Specific Colors (Matching the Widgets) */
+        
+        /* Trumpet: Blue */
+        .card.trumpet { background: linear-gradient(135deg, #2c3e50, #34495e); }
+        
+        /* Flute: Teal */
+        .card.flute { background: linear-gradient(135deg, #00897b, #00695c); }
+        
+        /* Clarinet: Orange/Wood */
+        .card.clarinet { background: linear-gradient(135deg, #d35400, #a04000); }
+        
+        /* Alto Sax: Gold */
+        .card.alto { background: linear-gradient(135deg, #b7950b, #9a7d0a); }
+        
+        /* Tenor Sax: Bronze */
+        .card.tenor { background: linear-gradient(135deg, #a04000, #6e2c00); }
+        
+        /* Trombone: Ochre */
+        .card.trombone { background: linear-gradient(135deg, #b9770e, #7e5109); }
+        
+        /* Baritone: Slate */
+        .card.baritone { background: linear-gradient(135deg, #455a64, #263238); }
+        
+        /* Tuba: Deep Brown */
+        .card.tuba { background: linear-gradient(135deg, #3e2723, #1b0000); }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #95a5a6;
+        }
+
+        .tagline {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 10px;
+            border: 1px solid #ffeeba;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Band Practice Studio</h1>
+        <p class="subtitle">Select your instrument to begin your practice session.</p>
+        <div class="tagline">🎤 Microphone access required</div>
+    </header>
+
+    <div class="grid-container">
+        
+        <!-- Woodwinds -->
+        <a href="https://peteaaro2483.github.io/innovation-canvas/flute-practice.html" class="card flute">
+            <div class="card-content">
+                <span class="card-title">Flute</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎶</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/clarinet-practice.html" class="card clarinet">
+            <div class="card-content">
+                <span class="card-title">Clarinet</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎵</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/altosax-practice.html" class="card alto">
+            <div class="card-content">
+                <span class="card-title">Alto Sax</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎷</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/tenorsax-practice.html" class="card tenor">
+            <div class="card-content">
+                <span class="card-title">Tenor Sax</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎷</div>
+        </a>
+
+        <!-- Brass -->
+        <a href="https://peteaaro2483.github.io/innovation-canvas/trumpet-practice.html" class="card trumpet">
+            <div class="card-content">
+                <span class="card-title">Trumpet</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎺</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/trombone-practice.html" class="card trombone">
+            <div class="card-content">
+                <span class="card-title">Trombone</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎺</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/baritone-practice.html" class="card baritone">
+            <div class="card-content">
+                <span class="card-title">Baritone</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎺</div>
+        </a>
+
+        <a href="https://peteaaro2483.github.io/innovation-canvas/tuba-practice.html" class="card tuba">
+            <div class="card-content">
+                <span class="card-title">Tuba</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎺</div>
+        </a>
+
+    </div>
+
+    <footer>
+        <p>Designed for K-12 Music Education • Innovation Canvas</p>
+    </footer>
+
+</body>
+</html>
