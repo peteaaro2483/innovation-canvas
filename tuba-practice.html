@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuba Practice: Scale Builder</title>
+    <style>
+        :root {
+            --primary: #3e2723; /* Deep Bronze/Dark Brown */
+            --accent: #5d4037;  /* Lighter Bronze */
+            --success: #27ae60;
+            --bg: #efebe9;      /* Pale Warm Grey */
+            --surface: #ffffff;
+            --key-border: #1b0000;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .container {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        /* Mode Toggle */
+        .mode-selector {
+            background: #d7ccc8; 
+            padding: 5px;
+            border-radius: 8px;
+            display: inline-flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #3e2723;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button.control-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button.control-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        button.control-btn.active {
+            background-color: var(--accent);
+            font-weight: bold;
+            border: 2px solid #1b0000;
+        }
+
+        button.control-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            border: none;
+        }
+
+        /* Display Area */
+        .display-area {
+            position: relative;
+            height: 320px; /* Increased height to fit low notes */
+            margin: 20px auto;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            color: var(--success);
+            z-index: 10;
+            border-radius: 8px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #staffCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Valve Diagram */
+        .valves-container {
+            margin-top: 15px;
+        }
+
+        .valves {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+            height: 60px;
+        }
+
+        .valve-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .valve {
+            width: 50px; 
+            height: 50px;
+            border: 4px solid var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: white;
+            color: #a1887f;
+            transition: all 0.2s;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+            font-size: 1.2rem;
+        }
+
+        .valve.pressed {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: none;
+        }
+
+        .valve-label {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 5px;
+            color: #8d6e63;
+        }
+
+        /* Feedback UI */
+        .feedback {
+            font-size: 1.2rem;
+            height: 30px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .listening-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: #bdc3c7;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .listening-indicator.active {
+            background-color: var(--success);
+            animation: pulse 1s infinite;
+        }
+
+        .success-msg {
+            color: var(--success);
+            animation: bounce 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        #pitch-debug {
+            font-size: 0.8rem;
+            color: #95a5a6;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            visibility: hidden;
+        }
+
+        .instructions {
+            background-color: #d7ccc8; 
+            color: #3e2723;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            border: 1px solid #a1887f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🎺 Tuba Practice Scale Builder</h1>
+    
+    <div class="instructions" id="messageBox">
+        Click "Start Microphone" to begin. Ensure you are in a quiet room.
+    </div>
+
+    <!-- Range Selector -->
+    <div class="mode-selector">
+        <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes (Bb-F)</button>
+        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Bb-Bb)</button>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" id="btnStart" onclick="startAudioContext()">🎤 Start Microphone</button>
+        <button class="control-btn" id="btnLvl1" onclick="setLevel(1)" disabled>Level 1: Order + Help</button>
+        <button class="control-btn" id="btnLvl2" onclick="setLevel(2)" disabled>Level 2: Order Only</button>
+        <button class="control-btn" id="btnLvl3" onclick="setLevel(3)" disabled>Level 3: Random + Help</button>
+        <button class="control-btn" id="btnLvl4" onclick="setLevel(4)" disabled>Level 4: Challenge</button>
+    </div>
+
+    <div class="display-area">
+        <div id="successOverlay" class="overlay">✅</div>
+        <canvas id="staffCanvas" width="600" height="300"></canvas>
+    </div>
+
+    <!-- UDL: Visual Fingering Representation (3 Valves) -->
+    <div class="valves-container" id="fingeringDisplay">
+        <div class="valves">
+            <div class="valve-wrapper">
+                <div class="valve" id="v1">1</div>
+            </div>
+            <div class="valve-wrapper">
+                <div class="valve" id="v2">2</div>
+            </div>
+            <div class="valve-wrapper">
+                <div class="valve" id="v3">3</div>
+            </div>
+        </div>
+        <div class="valve-label">Valves (Press to Play)</div>
+    </div>
+
+    <div class="feedback">
+        <span class="listening-indicator" id="indicator"></span>
+        <span id="feedbackText">Waiting to start...</span>
+    </div>
+
+    <div id="pitch-debug">Detected: -- Hz</div>
+</div>
+
+<script>
+    // --- Configuration & Data ---
+    // TUBA (BBb): Concert Pitch (Bass Clef).
+    // Scale: Bb1 to Bb2.
+    // Frequencies are very low.
+    
+    const FULL_SCALE = [
+        // Bb1 (2 ledger lines below) - Open [0,0,0]
+        { name: "Bb", octave: 1, frequency: 58.27, valves: [0, 0, 0] }, 
+        
+        // C2 (Ledger line below) - 1 & 3 [1,0,1]
+        { name: "C", octave: 2, frequency: 65.41, valves: [1, 0, 1] }, 
+        
+        // D2 (Below staff) - 1 & 2 [1,1,0]
+        { name: "D", octave: 2, frequency: 73.42, valves: [1, 1, 0] }, 
+        
+        // Eb2 (Bottom line - wait, Bass Clef bottom line is G2. So space below, line below that...)
+        // Let's check Staff mapping:
+        // Top Line: A3
+        // Bottom Line: G2
+        // So Eb2 is below the staff (ledger line area or space below first ledger line?)
+        // G2 (line), F2 (space), E2 (ledger line), Eb2 (space below ledger?)
+        // Frequency check: Eb2 is 77.78 Hz.
+        { name: "Eb", octave: 2, frequency: 77.78, valves: [1, 0, 0] }, 
+        
+        // F2 (Space below staff) - Open [0,0,0]
+        { name: "F", octave: 2, frequency: 87.31, valves: [0, 0, 0] }, 
+        
+        // G2 (Bottom Line) - 1 & 2 [1,1,0]
+        { name: "G", octave: 2, frequency: 98.00, valves: [1, 1, 0] }, 
+        
+        // A2 (1st Space) - 2 [0,1,0]
+        { name: "A", octave: 2, frequency: 110.00, valves: [0, 1, 0] }, 
+        
+        // Bb2 (2nd Line from bottom) - Open [0,0,0]
+        { name: "Bb", octave: 2, frequency: 116.54, valves: [0, 0, 0] }  
+    ];
+
+    // Application State
+    let audioContext;
+    let analyser;
+    let microphone;
+    let buflen = 2048;
+    let buf = new Float32Array(buflen);
+    let isListening = false;
+    
+    let currentLevel = 1;
+    let currentRange = 5; // 5 or 8
+    let activeNotes = FULL_SCALE.slice(0, 5);
+    
+    let currentNoteIndex = 0;
+    let currentNote = activeNotes[0];
+    let noteHeldFrames = 0; 
+    const FRAMES_REQUIRED = 20; // Approx 0.33 seconds
+    let processingSuccess = false; 
+
+    // UI Elements
+    const canvas = document.getElementById('staffCanvas');
+    const ctx = canvas.getContext('2d');
+    const feedbackText = document.getElementById('feedbackText');
+    const debugText = document.getElementById('pitch-debug');
+    const indicator = document.getElementById('indicator');
+    const fingeringDisplay = document.getElementById('fingeringDisplay');
+    const valveEls = [document.getElementById('v1'), document.getElementById('v2'), document.getElementById('v3')];
+
+    // --- Mode Selection ---
+    function setRange(range) {
+        currentRange = range;
+        
+        // UI Toggle
+        document.getElementById('mode5').classList.toggle('active', range === 5);
+        document.getElementById('mode8').classList.toggle('active', range === 8);
+
+        // Update Data
+        activeNotes = (range === 5) ? FULL_SCALE.slice(0, 5) : FULL_SCALE;
+        
+        // Reset Level to restart progression
+        if(isListening) {
+            setLevel(currentLevel);
+        }
+    }
+
+    // --- Audio System ---
+    
+    async function startAudioContext() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+
+            isListening = true;
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('messageBox').innerText = "Microphone active. Play the note shown on the staff!";
+            document.getElementById('messageBox').style.backgroundColor = "#d4edda";
+            document.getElementById('messageBox').style.color = "#155724";
+            
+            // Enable level buttons
+            [1, 2, 3, 4].forEach(i => document.getElementById(`btnLvl${i}`).disabled = false);
+            
+            setLevel(1);
+            indicator.classList.add('active');
+            updatePitch();
+        } catch (err) {
+            alert("Could not access microphone. Please allow permissions. Error: " + err);
+        }
+    }
+
+    // Autocorrelation algorithm
+    function autoCorrelate(buf, sampleRate) {
+        let SIZE = buf.length;
+        let rms = 0;
+
+        for (let i = 0; i < SIZE; i++) {
+            let val = buf[i];
+            rms += val * val;
+        }
+        rms = Math.sqrt(rms / SIZE);
+
+        if (rms < 0.015) return -1; 
+
+        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) {
+            if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+        }
+        for (let i = 1; i < SIZE / 2; i++) {
+            if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+        }
+
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+
+        let c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) {
+            for (let j = 0; j < SIZE - i; j++) {
+                c[i] = c[i] + buf[j] * buf[j + i];
+            }
+        }
+
+        let d = 0; while (c[d] > c[d + 1]) d++;
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) {
+            if (c[i] > maxval) {
+                maxval = c[i];
+                maxpos = i;
+            }
+        }
+        let T0 = maxpos;
+
+        let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+        let a = (x1 + x3 - 2 * x2) / 2;
+        let b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+
+        return sampleRate / T0;
+    }
+
+    function updatePitch() {
+        if (!isListening) return;
+
+        analyser.getFloatTimeDomainData(buf);
+        let pitch = autoCorrelate(buf, audioContext.sampleRate);
+
+        if (pitch !== -1) {
+            debugText.innerText = `Detected: ${Math.round(pitch)} Hz`;
+            checkNote(pitch);
+        } else {
+            noteHeldFrames = 0; // Reset if silence
+        }
+
+        requestAnimationFrame(updatePitch);
+    }
+
+    // --- Game Logic ---
+
+    function setLevel(lvl) {
+        currentLevel = lvl;
+        
+        // Update Buttons
+        document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`btnLvl${lvl}`).classList.add('active');
+
+        // Logic reset
+        currentNoteIndex = 0;
+        
+        // Visibility of scaffolding
+        if (lvl === 2 || lvl === 4) {
+            fingeringDisplay.classList.add('hidden');
+        } else {
+            fingeringDisplay.classList.remove('hidden');
+        }
+
+        feedbackText.innerText = `Level ${lvl} Started! Play:`;
+        feedbackText.className = "feedback";
+        
+        loadNextNote();
+    }
+
+    function loadNextNote() {
+        if (currentLevel === 1 || currentLevel === 2) {
+            if (currentNoteIndex >= activeNotes.length) currentNoteIndex = 0;
+            currentNote = activeNotes[currentNoteIndex];
+        } else {
+            let randomIndex = Math.floor(Math.random() * activeNotes.length);
+            currentNote = activeNotes[randomIndex];
+        }
+
+        drawStaff();
+        updateValves();
+    }
+
+    function updateValves() {
+        const v = currentNote.valves;
+        valveEls[0].className = v[0] ? 'valve pressed' : 'valve';
+        valveEls[1].className = v[1] ? 'valve pressed' : 'valve';
+        valveEls[2].className = v[2] ? 'valve pressed' : 'valve';
+    }
+
+    function checkNote(freq) {
+        if (processingSuccess) return; 
+
+        // Tolerance: +/- 4%
+        const target = currentNote.frequency;
+        const tolerance = target * 0.04; 
+
+        if (freq > target - tolerance && freq < target + tolerance) {
+            noteHeldFrames++;
+            feedbackText.innerText = "Hold it...";
+            feedbackText.style.color = "orange";
+            
+            if (noteHeldFrames > FRAMES_REQUIRED) {
+                processingSuccess = true; 
+                feedbackText.innerText = "Correct!";
+                feedbackText.className = "feedback success-msg";
+                document.getElementById('successOverlay').style.display = 'flex'; 
+                
+                noteHeldFrames = 0;
+                
+                setTimeout(() => {
+                    document.getElementById('successOverlay').style.display = 'none'; 
+                    feedbackText.innerText = "Play..."; 
+                    feedbackText.style.color = "var(--primary)";
+                    
+                    if (currentLevel <= 2) currentNoteIndex++;
+                    loadNextNote();
+                    
+                    processingSuccess = false; 
+                }, 2000); 
+            }
+        } else {
+            // Tuba Fallback: Also check if they are playing the Octave UP (Bb2 range) for the low notes, 
+            // as microphones sometimes catch the harmonic better.
+            const tolerance2 = (target * 2) * 0.04;
+            if (freq > (target * 2) - tolerance2 && freq < (target * 2) + tolerance2) {
+                 noteHeldFrames++;
+                 feedbackText.innerText = "Hold it...";
+                 if (noteHeldFrames > FRAMES_REQUIRED) {
+                    processingSuccess = true;
+                    feedbackText.innerText = "Correct!";
+                    feedbackText.className = "feedback success-msg";
+                    document.getElementById('successOverlay').style.display = 'flex'; 
+                    noteHeldFrames = 0;
+                    setTimeout(() => {
+                        document.getElementById('successOverlay').style.display = 'none'; 
+                        feedbackText.innerText = "Play..."; 
+                        feedbackText.style.color = "var(--primary)";
+                        if (currentLevel <= 2) currentNoteIndex++;
+                        loadNextNote();
+                        processingSuccess = false; 
+                    }, 2000);
+                 }
+                 return;
+            }
+
+            noteHeldFrames = Math.max(0, noteHeldFrames - 1); 
+        }
+    }
+
+    // --- Canvas Drawing ---
+
+    function drawStaff() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const startX = 50;
+        const endX = 550;
+        const lineSpacing = 20;
+        const staffTop = 60; // Adjusted up from 80 to allow room at bottom
+
+        // Draw 5 lines
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            let y = staffTop + (i * lineSpacing);
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
+            ctx.stroke();
+        }
+
+        // Draw Bass Clef
+        ctx.font = "60px serif";
+        ctx.fillStyle = "#000";
+        ctx.fillText("𝄢", startX + 10, staffTop + 65); // Unicode Bass Clef
+
+        drawNoteHead(currentNote);
+    }
+
+    function drawNoteHead(note) {
+        const staffTop = 60; // Adjusted up from 80
+        const lineSpacing = 20;
+        const centerX = 300;
+        
+        let yPos;
+        let needsLedger = false;
+        
+        // BASS CLEF STAFF MAPPING (Same as Baritone but lower notes)
+        // Top Line (A3): staffTop 
+        // Bottom Line (G2): staffTop + 4*spacing (160px if staffTop=80, 140px if staffTop=60)
+        
+        switch(note.name) {
+            case 'Bb': 
+                if (note.octave === 2) {
+                   // Bb2: 2nd Line from Bottom.
+                   yPos = staffTop + (3 * lineSpacing);
+                } else {
+                   // Bb1: Below C2.
+                   yPos = staffTop + (6.5 * lineSpacing);
+                   needsLedger = true;
+                }
+                break;
+            case 'A': // A2: 1st Space (from bottom).
+                yPos = staffTop + (3.5 * lineSpacing);
+                break;
+            case 'G': // G2: Bottom Line.
+                yPos = staffTop + (4 * lineSpacing);
+                break;
+            case 'F': // F2: Space below staff.
+                yPos = staffTop + (4.5 * lineSpacing);
+                break;
+            case 'Eb': // Eb2: Space below 1st Ledger Line? 
+                yPos = staffTop + (5 * lineSpacing);
+                needsLedger = true;
+                break;
+            case 'D': // D2: Space below E2 (1st Ledger).
+                yPos = staffTop + (5.5 * lineSpacing);
+                needsLedger = true;
+                break;
+            case 'C': // C2: 2nd Ledger Line.
+                yPos = staffTop + (6 * lineSpacing);
+                needsLedger = true;
+                break;
+        }
+
+        // Draw Note Head
+        ctx.beginPath();
+        ctx.ellipse(centerX, yPos, 12, 10, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // Draw Stem
+        // Tuba range -> mostly Stem Up because they are low.
+        // Rule: Below D3 (Middle line) -> Stem Up.
+        // All these notes are below D3.
+        let stemDown = false;
+
+        ctx.beginPath();
+        if (stemDown) {
+            ctx.moveTo(centerX - 11, yPos);
+            ctx.lineTo(centerX - 11, yPos + 50);
+        } else {
+            ctx.moveTo(centerX + 11, yPos);
+            ctx.lineTo(centerX + 11, yPos - 50);
+        }
+        ctx.stroke();
+
+        // Flat Symbol
+        if (note.name.includes('b')) {
+            ctx.font = "24px serif";
+            ctx.fillText("♭", centerX - 25, yPos + 8);
+        }
+
+        // Ledger Lines Logic
+        if (needsLedger) {
+            // 1st Ledger Line (E2 pos) = staffTop + 100
+            const l1 = staffTop + 100;
+            ctx.beginPath();
+            ctx.moveTo(centerX - 20, l1);
+            ctx.lineTo(centerX + 20, l1);
+            ctx.stroke();
+
+            // If Note is lower than D2 (i.e. C2 or Bb1), draw 2nd ledger line
+            if (note.name === 'C' || (note.name === 'Bb' && note.octave === 1)) {
+                const l2 = staffTop + 140; // 2 lines down (40px)
+                ctx.beginPath();
+                ctx.moveTo(centerX - 20, l2);
+                ctx.lineTo(centerX + 20, l2);
+                ctx.stroke();
+            }
+        }
+
+        // Note Name Label
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "#3e2723";
+        ctx.fillText(note.name, centerX - 8, yPos + 40);
+    }
+
+    drawStaff();
+
+</script>
+</body>
+</html>
