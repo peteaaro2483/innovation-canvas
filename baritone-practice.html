@@ -252,11 +252,88 @@
             font-size: 0.9rem;
             border: 1px solid #b0bec5;
         }
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <nav class="top-nav">
+        <a href="bandpracticestudio.html" class="home-btn">🏠 Home</a>
+        <div class="dropdown">
+            <button onclick="toggleMenu()" class="dropbtn">Switch Instrument ▼</button>
+            <div id="myDropdown" class="dropdown-content">
+                <a href="flute-practice.html">Flute</a>
+                <a href="clarinet-practice.html">Clarinet</a>
+                <a href="altosax-practice.html">Alto Sax</a>
+                <a href="tenorsax-practice.html">Tenor Sax</a>
+                <a href="trumpet-practice.html">Trumpet</a>
+                <a href="trombone-practice.html">Trombone</a>
+                <a href="baritone-practice.html">Baritone</a>
+                <a href="tuba-practice.html">Tuba</a>
+            </div>
+        </div>
+    </nav>
     <h1>🎺 Baritone Practice Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
@@ -311,6 +388,23 @@
     // BARITONE B.C.: Concert Pitch (Bass Clef).
     // Beginner Scale: Bb Major (Bb, C, D, Eb, F, G, A, Bb)
     // Valve Logic: 1, 2, 3
+
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
     
     const FULL_SCALE = [
         // Bb2 (2nd line from bottom) - Open [0,0,0]
