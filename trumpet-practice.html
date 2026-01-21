@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trumpet Practice: First 5 Notes</title>
+    <title>Trumpet Practice: Scale Builder</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -41,6 +41,32 @@
             color: var(--primary);
         }
 
+        /* Mode Toggle */
+        .mode-selector {
+            background: #dfe6e9;
+            padding: 5px;
+            border-radius: 8px;
+            display: inline-flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
         /* UDL: Clear navigation for levels */
         .controls {
             display: flex;
@@ -50,7 +76,7 @@
             flex-wrap: wrap;
         }
 
-        button {
+        button.control-btn {
             background-color: var(--primary);
             color: white;
             border: none;
@@ -61,17 +87,17 @@
             transition: all 0.2s;
         }
 
-        button:hover {
+        button.control-btn:hover {
             opacity: 0.9;
             transform: translateY(-1px);
         }
 
-        button.active {
+        button.control-btn.active {
             background-color: var(--accent);
             font-weight: bold;
         }
 
-        button:disabled {
+        button.control-btn:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
             transform: none;
@@ -216,18 +242,24 @@
 <body>
 
 <div class="container">
-    <h1>🎺 Trumpet Practice: First 5 Notes</h1>
+    <h1>🎺 Trumpet Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
         Click "Start Microphone" to begin. Ensure you are in a quiet room.
     </div>
 
+    <!-- Range Selector -->
+    <div class="mode-selector">
+        <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes</button>
+        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Octave)</button>
+    </div>
+
     <div class="controls">
-        <button id="btnStart" onclick="startAudioContext()">🎤 Start Microphone</button>
-        <button id="btnLvl1" onclick="setLevel(1)" disabled>Level 1: Order + Help</button>
-        <button id="btnLvl2" onclick="setLevel(2)" disabled>Level 2: Order Only</button>
-        <button id="btnLvl3" onclick="setLevel(3)" disabled>Level 3: Random + Help</button>
-        <button id="btnLvl4" onclick="setLevel(4)" disabled>Level 4: Challenge</button>
+        <button class="control-btn" id="btnStart" onclick="startAudioContext()">🎤 Start Microphone</button>
+        <button class="control-btn" id="btnLvl1" onclick="setLevel(1)" disabled>Level 1: Order + Help</button>
+        <button class="control-btn" id="btnLvl2" onclick="setLevel(2)" disabled>Level 2: Order Only</button>
+        <button class="control-btn" id="btnLvl3" onclick="setLevel(3)" disabled>Level 3: Random + Help</button>
+        <button class="control-btn" id="btnLvl4" onclick="setLevel(4)" disabled>Level 4: Challenge</button>
     </div>
 
     <div class="display-area">
@@ -262,14 +294,16 @@
 <script>
     // --- Configuration & Data ---
     // Note: Trumpet is a Bb instrument. 
-    // Written C4 = Sounding Bb3 (233.08Hz)
-    // Written G4 = Sounding F4 (349.23Hz)
-    const NOTES = [
-        { name: "C", writtenOctave: 4, frequency: 233.08, valves: [0, 0, 0], position: 0 }, // Low C (below staff line)
-        { name: "D", writtenOctave: 4, frequency: 261.63, valves: [1, 0, 1], position: 1 }, // Just below staff
-        { name: "E", writtenOctave: 4, frequency: 293.66, valves: [1, 1, 0], position: 2 }, // 1st line
-        { name: "F", writtenOctave: 4, frequency: 311.13, valves: [1, 0, 0], position: 3 }, // 1st space
-        { name: "G", writtenOctave: 4, frequency: 349.23, valves: [0, 0, 0], position: 4 }  // 2nd line
+    // Frequencies are Concert Pitch.
+    const FULL_SCALE = [
+        { name: "C", octave: 4, frequency: 233.08, valves: [0, 0, 0] }, // Concert Bb3
+        { name: "D", octave: 4, frequency: 261.63, valves: [1, 0, 1] }, // Concert C4
+        { name: "E", octave: 4, frequency: 293.66, valves: [1, 1, 0] }, // Concert D4
+        { name: "F", octave: 4, frequency: 311.13, valves: [1, 0, 0] }, // Concert Eb4
+        { name: "G", octave: 4, frequency: 349.23, valves: [0, 0, 0] }, // Concert F4
+        { name: "A", octave: 4, frequency: 392.00, valves: [1, 1, 0] }, // Concert G4 (Valves 1-2)
+        { name: "B", octave: 4, frequency: 440.00, valves: [0, 1, 0] }, // Concert A4 (Valve 2)
+        { name: "C", octave: 5, frequency: 466.16, valves: [0, 0, 0] }  // Concert Bb4 (Open) - High C
     ];
 
     // Application State
@@ -279,11 +313,15 @@
     let buflen = 2048;
     let buf = new Float32Array(buflen);
     let isListening = false;
+    
     let currentLevel = 1;
+    let currentRange = 5; // 5 or 8
+    let activeNotes = FULL_SCALE.slice(0, 5);
+    
     let currentNoteIndex = 0;
-    let currentNote = NOTES[0];
-    let noteHeldFrames = 0; // Frames the note has been held correctly
-    const FRAMES_REQUIRED = 20; // Increased: Approx 0.33 seconds of stable pitch to prevent jumping
+    let currentNote = activeNotes[0];
+    let noteHeldFrames = 0; 
+    const FRAMES_REQUIRED = 20; // Approx 0.33 seconds of stable pitch
     let processingSuccess = false; // Lock input during success animation
 
     // UI Elements
@@ -295,6 +333,23 @@
     const indicator = document.getElementById('indicator');
     const valveDisplay = document.getElementById('valveDisplay');
     const fingeringText = document.getElementById('fingeringText');
+
+    // --- Mode Selection ---
+    function setRange(range) {
+        currentRange = range;
+        
+        // UI Toggle
+        document.getElementById('mode5').classList.toggle('active', range === 5);
+        document.getElementById('mode8').classList.toggle('active', range === 8);
+
+        // Update Data
+        activeNotes = (range === 5) ? FULL_SCALE.slice(0, 5) : FULL_SCALE;
+        
+        // Reset Level to restart progression
+        if(isListening) {
+            setLevel(currentLevel);
+        }
+    }
 
     // --- Audio System ---
     
@@ -422,12 +477,12 @@
         // Selection Logic
         if (currentLevel === 1 || currentLevel === 2) {
             // Linear
-            if (currentNoteIndex >= NOTES.length) currentNoteIndex = 0;
-            currentNote = NOTES[currentNoteIndex];
+            if (currentNoteIndex >= activeNotes.length) currentNoteIndex = 0;
+            currentNote = activeNotes[currentNoteIndex];
         } else {
             // Random
-            let randomIndex = Math.floor(Math.random() * NOTES.length);
-            currentNote = NOTES[randomIndex];
+            let randomIndex = Math.floor(Math.random() * activeNotes.length);
+            currentNote = activeNotes[randomIndex];
         }
 
         drawStaff();
@@ -446,7 +501,7 @@
         if (processingSuccess) return; // Ignore input during success animation
 
         // Check if frequency matches target within tolerance
-        // Tolerance: +/- 4% (Adjusted per request)
+        // Tolerance: +/- 4%
         const target = currentNote.frequency;
         const tolerance = target * 0.04; 
 
@@ -519,33 +574,35 @@
 
     function drawNoteHead(note) {
         // Position logic
-        // Middle G is on 2nd line from bottom.
-        // F is 1st space.
-        // E is 1st line.
-        // D is space below 1st line.
-        // C is on ledger line below.
-        
         const staffTop = 80;
         const lineSpacing = 20;
         const centerX = 300;
         
-        // Calculate Y position based on note position in array
-        // G (index 4) -> 2nd line from bottom -> staffTop + 3*lineSpacing
-        // This mapping needs to be precise visually
-        
-        // Let's map manually for the 5 notes
         let yPos;
         let needsLedger = false;
 
+        // Note mappings based on staffTop = 80
+        // Line 1 (Top E): 80
+        // Line 5 (Bottom E): 160
+        
         switch(note.name) {
-            case 'G': yPos = staffTop + (3 * lineSpacing); break; // 2nd line
+            case 'C': 
+                if (note.octave === 5) {
+                   // High C: 3rd space (between 2nd and 3rd line from top)
+                   // Staff Top (E) + 1.5 spaces
+                   yPos = staffTop + (1.5 * lineSpacing);
+                } else {
+                   // Low C: Ledger line below
+                   yPos = staffTop + (5 * lineSpacing);
+                   needsLedger = true;
+                }
+                break;
+            case 'B': yPos = staffTop + (2 * lineSpacing); break; // Middle Line
+            case 'A': yPos = staffTop + (2.5 * lineSpacing); break; // 2nd Space
+            case 'G': yPos = staffTop + (3 * lineSpacing); break; // 2nd line from bottom
             case 'F': yPos = staffTop + (3.5 * lineSpacing); break; // 1st space
             case 'E': yPos = staffTop + (4 * lineSpacing); break; // Bottom line
             case 'D': yPos = staffTop + (4.5 * lineSpacing); break; // Space below
-            case 'C': 
-                yPos = staffTop + (5 * lineSpacing); 
-                needsLedger = true;
-                break; // Ledger line
         }
 
         // Draw Note Head
@@ -554,13 +611,26 @@
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // Draw Stem (upwards for these notes usually)
+        // Draw Stem
+        // Stems go UP for low notes, DOWN for notes on/above middle line (B)
+        // General rule: B and above = Down
+        let stemDown = false;
+        if (note.name === 'B' || (note.name === 'C' && note.octave === 5) || note.name === 'A') { 
+            // Usually B is the flipping point, but context matters. Let's make A/B/C down for cleaner look.
+            stemDown = true; 
+        }
+
         ctx.beginPath();
-        ctx.moveTo(centerX + 11, yPos);
-        ctx.lineTo(centerX + 11, yPos - 50);
+        if (stemDown) {
+            ctx.moveTo(centerX - 11, yPos);
+            ctx.lineTo(centerX - 11, yPos + 50);
+        } else {
+            ctx.moveTo(centerX + 11, yPos);
+            ctx.lineTo(centerX + 11, yPos - 50);
+        }
         ctx.stroke();
 
-        // Draw Ledger Line for C
+        // Draw Ledger Line for Low C
         if (needsLedger) {
             ctx.beginPath();
             ctx.moveTo(centerX - 20, yPos);
@@ -571,7 +641,7 @@
         // Note Name Label (Optional UDL support)
         ctx.font = "20px Arial";
         ctx.fillStyle = "#2c3e50";
-        ctx.fillText(note.name, centerX - 8, yPos + 40);
+        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
     }
 
     // Initial Draw
