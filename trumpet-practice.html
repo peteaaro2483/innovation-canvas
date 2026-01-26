@@ -35,6 +35,68 @@
             text-align: center;
         }
 
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
@@ -67,7 +129,12 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* UDL: Clear navigation for levels */
+        /* Label Selector */
+        .mode-selector.labels {
+            margin-top: -10px;
+        }
+
+        /* Controls */
         .controls {
             display: flex;
             justify-content: center;
@@ -103,7 +170,7 @@
             transform: none;
         }
 
-        /* The Note Display Area */
+        /* Display Area */
         .display-area {
             position: relative;
             height: 250px;
@@ -117,7 +184,22 @@
             justify-content: center;
         }
 
-        /* Success Overlay */
+        /* Fixed Note Label Style (Overlay Position) */
+        .fixed-note-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+            z-index: 5;
+        }
+
         .overlay {
             position: absolute;
             top: 0;
@@ -125,7 +207,7 @@
             width: 100%;
             height: 100%;
             background: rgba(255,255,255,0.85);
-            display: none; /* Hidden by default */
+            display: none;
             align-items: center;
             justify-content: center;
             font-size: 6rem;
@@ -140,19 +222,22 @@
             to { transform: scale(1); opacity: 1; }
         }
 
-        /* Canvas for Music Staff */
         #staffCanvas {
             width: 100%;
             height: 100%;
         }
 
         /* Valve Diagram */
+        .valves-container {
+            margin-top: 15px;
+        }
+
         .valves {
             display: flex;
             gap: 15px;
             justify-content: center;
             margin-top: 10px;
-            height: 60px; /* Fixed height to prevent layout shift */
+            height: 60px;
         }
 
         .valve {
@@ -217,7 +302,6 @@
             60% {transform: translateY(-5px);}
         }
 
-        /* Tuner/Debug Info (Hidden by default, useful for setup) */
         #pitch-debug {
             font-size: 0.8rem;
             color: #95a5a6;
@@ -237,77 +321,20 @@
             font-size: 0.9rem;
             border: 1px solid #ffeeba;
         }
-        /* Navigation Menu Styles */
-        .top-nav {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-
-        .home-btn {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropbtn {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .dropdown-content a {
-            color: var(--primary);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-
-        .show { display: block; }
     </style>
 </head>
 <body>
 
-<!-- MENU START -->
+<div class="container">
+    
+    <!-- MENU START -->
     <nav class="top-nav">
         <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
-            <button onclick="toggleMenu()" class="dropbtn">Switch Instrument ▼</button>
+            <button onclick="toggleMenu()" class="dropbtn">Apps ▼</button>
             <div id="myDropdown" class="dropdown-content">
+                <a href="songs.html">🎵 Song Studio</a>
+                <hr style="margin:0; border:0; border-top:1px solid #eee;">
                 <a href="flute-practice.html">Flute</a>
                 <a href="clarinet-practice.html">Clarinet</a>
                 <a href="altosax-practice.html">Alto Sax</a>
@@ -322,7 +349,7 @@
         </div>
     </nav>
     <!-- MENU END -->
-    
+
     <h1>🎺 Trumpet Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
@@ -331,8 +358,16 @@
 
     <!-- Range Selector -->
     <div class="mode-selector">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Range:</span>
         <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes</button>
-        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Octave)</button>
+        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale</button>
+    </div>
+
+    <!-- Label Selector -->
+    <div class="mode-selector labels">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Labels:</span>
+        <button class="mode-btn active" id="dispName" onclick="setDisplayMode('name')">Note Names</button>
+        <button class="mode-btn" id="dispDegree" onclick="setDisplayMode('degree')">Scale Degrees</button>
     </div>
 
     <div class="controls">
@@ -345,6 +380,8 @@
 
     <div class="display-area">
         <div id="successOverlay" class="overlay">✅</div>
+        <!-- Note Label INSIDE display-area -->
+        <div id="noteLabel" class="fixed-note-label">--</div>
         <canvas id="staffCanvas" width="600" height="200"></canvas>
     </div>
 
@@ -376,31 +413,15 @@
     // --- Configuration & Data ---
     // Note: Trumpet is a Bb instrument. 
     // Frequencies are Concert Pitch.
-    function toggleMenu() {
-        document.getElementById("myDropdown").classList.toggle("show");
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
     const FULL_SCALE = [
         { name: "C", octave: 4, frequency: 233.08, valves: [0, 0, 0] }, // Concert Bb3
         { name: "D", octave: 4, frequency: 261.63, valves: [1, 0, 1] }, // Concert C4
         { name: "E", octave: 4, frequency: 293.66, valves: [1, 1, 0] }, // Concert D4
         { name: "F", octave: 4, frequency: 311.13, valves: [1, 0, 0] }, // Concert Eb4
         { name: "G", octave: 4, frequency: 349.23, valves: [0, 0, 0] }, // Concert F4
-        { name: "A", octave: 4, frequency: 392.00, valves: [1, 1, 0] }, // Concert G4 (Valves 1-2)
-        { name: "B", octave: 4, frequency: 440.00, valves: [0, 1, 0] }, // Concert A4 (Valve 2)
-        { name: "C", octave: 5, frequency: 466.16, valves: [0, 0, 0] }  // Concert Bb4 (Open) - High C
+        { name: "A", octave: 4, frequency: 392.00, valves: [1, 1, 0] }, // Concert G4
+        { name: "B", octave: 4, frequency: 440.00, valves: [0, 1, 0] }, // Concert A4
+        { name: "C", octave: 5, frequency: 466.16, valves: [0, 0, 0] }  // Concert Bb4
     ];
 
     // Application State
@@ -413,6 +434,7 @@
     
     let currentLevel = 1;
     let currentRange = 5; // 5 or 8
+    let displayMode = 'name'; // NEW
     let activeNotes = FULL_SCALE.slice(0, 5);
     
     let currentNoteIndex = 0;
@@ -431,6 +453,24 @@
     const valveDisplay = document.getElementById('valveDisplay');
     const fingeringText = document.getElementById('fingeringText');
 
+    /* MENU JS START */
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+    /* MENU JS END */
+
     // --- Mode Selection ---
     function setRange(range) {
         currentRange = range;
@@ -446,6 +486,26 @@
         if(isListening) {
             setLevel(currentLevel);
         }
+    }
+
+    // NEW: Set Display Mode
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('dispName').classList.toggle('active', mode === 'name');
+        document.getElementById('dispDegree').classList.toggle('active', mode === 'degree');
+        updateNoteLabel();
+    }
+
+    // NEW: Helper to update the fixed DOM label
+    function updateNoteLabel() {
+        let labelText = currentNote.name;
+        if (displayMode === 'degree') {
+            const index = FULL_SCALE.indexOf(currentNote);
+            if (index !== -1) {
+                labelText = (index + 1).toString();
+            }
+        }
+        document.getElementById('noteLabel').innerText = labelText;
     }
 
     // --- Audio System ---
@@ -584,6 +644,7 @@
 
         drawStaff();
         updateValves();
+        updateNoteLabel();
     }
 
     function updateValves() {
@@ -595,9 +656,8 @@
     }
 
     function checkNote(freq) {
-        if (processingSuccess) return; // Ignore input during success animation
+        if (processingSuccess) return; 
 
-        // Check if frequency matches target within tolerance
         // Tolerance: +/- 4%
         const target = currentNote.frequency;
         const tolerance = target * 0.04; 
@@ -735,14 +795,12 @@
             ctx.stroke();
         }
 
-        // Note Name Label (Optional UDL support)
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#2c3e50";
-        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
+        // Removed Canvas Text
     }
 
     // Initial Draw
     drawStaff();
+    updateNoteLabel();
 
 </script>
 </body>
