@@ -36,6 +36,68 @@
             text-align: center;
         }
 
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #efebe9;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
@@ -118,6 +180,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Fixed Note Label Style (Overlay Position) */
+        .fixed-note-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+            z-index: 5;
         }
 
         .overlay {
@@ -253,72 +331,13 @@
             font-size: 0.9rem;
             border: 1px solid #a1887f;
         }
-        /* Navigation Menu Styles */
-        .top-nav {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-
-        .home-btn {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropbtn {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .dropdown-content a {
-            color: var(--primary);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-
-        .show { display: block; }
     </style>
 </head>
 <body>
 
-<!-- MENU START -->
+<div class="container">
+    
+    <!-- MENU START -->
     <nav class="top-nav">
         <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
@@ -339,7 +358,7 @@
     </nav>
     <!-- MENU END -->
     
-    <h1>🎺 Tuba Practice Scale Builder</h1>
+    <h1>🎺 Tuba Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
         Click "Start Microphone" to begin. Ensure you are in a quiet room.
@@ -347,8 +366,16 @@
 
     <!-- Range Selector -->
     <div class="mode-selector">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Range:</span>
         <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes (Bb-F)</button>
         <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Bb-Bb)</button>
+    </div>
+
+    <!-- Label Selector -->
+    <div class="mode-selector" style="margin-top: -10px;">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Labels:</span>
+        <button class="mode-btn active" id="dispName" onclick="setDisplayMode('name')">Note Names</button>
+        <button class="mode-btn" id="dispDegree" onclick="setDisplayMode('degree')">Scale Degrees</button>
     </div>
 
     <div class="controls">
@@ -361,6 +388,8 @@
 
     <div class="display-area">
         <div id="successOverlay" class="overlay">✅</div>
+        <!-- Note Label INSIDE display-area -->
+        <div id="noteLabel" class="fixed-note-label">--</div>
         <canvas id="staffCanvas" width="600" height="300"></canvas>
     </div>
 
@@ -393,22 +422,7 @@
     // TUBA (BBb): Concert Pitch (Bass Clef).
     // Scale: Bb1 to Bb2.
     // Frequencies are very low.
-    function toggleMenu() {
-        document.getElementById("myDropdown").classList.toggle("show");
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
+    
     const FULL_SCALE = [
         // Bb1 (2 ledger lines below) - Open [0,0,0]
         { name: "Bb", octave: 1, frequency: 58.27, valves: [0, 0, 0] }, 
@@ -451,6 +465,7 @@
     
     let currentLevel = 1;
     let currentRange = 5; // 5 or 8
+    let displayMode = 'name'; // NEW
     let activeNotes = FULL_SCALE.slice(0, 5);
     
     let currentNoteIndex = 0;
@@ -468,6 +483,25 @@
     const fingeringDisplay = document.getElementById('fingeringDisplay');
     const valveEls = [document.getElementById('v1'), document.getElementById('v2'), document.getElementById('v3')];
 
+    /* MENU JS START */
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+    /* MENU JS END */
+
     // --- Mode Selection ---
     function setRange(range) {
         currentRange = range;
@@ -483,6 +517,26 @@
         if(isListening) {
             setLevel(currentLevel);
         }
+    }
+
+    // NEW: Set Display Mode
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('dispName').classList.toggle('active', mode === 'name');
+        document.getElementById('dispDegree').classList.toggle('active', mode === 'degree');
+        updateNoteLabel(); 
+    }
+
+    // NEW: Helper to update the fixed DOM label
+    function updateNoteLabel() {
+        let labelText = currentNote.name;
+        if (displayMode === 'degree') {
+            const index = FULL_SCALE.indexOf(currentNote);
+            if (index !== -1) {
+                labelText = (index + 1).toString();
+            }
+        }
+        document.getElementById('noteLabel').innerText = labelText;
     }
 
     // --- Audio System ---
@@ -615,6 +669,7 @@
 
         drawStaff();
         updateValves();
+        updateNoteLabel();
     }
 
     function updateValves() {
@@ -721,39 +776,33 @@
         let yPos;
         let needsLedger = false;
         
-        // BASS CLEF STAFF MAPPING (Same as Baritone but lower notes)
-        // Top Line (A3): staffTop 
-        // Bottom Line (G2): staffTop + 4*spacing (160px if staffTop=80, 140px if staffTop=60)
-        
         switch(note.name) {
             case 'Bb': 
                 if (note.octave === 2) {
-                   // Bb2: 2nd Line from Bottom.
                    yPos = staffTop + (3 * lineSpacing);
                 } else {
-                   // Bb1: Below C2.
                    yPos = staffTop + (6.5 * lineSpacing);
                    needsLedger = true;
                 }
                 break;
-            case 'A': // A2: 1st Space (from bottom).
+            case 'A': 
                 yPos = staffTop + (3.5 * lineSpacing);
                 break;
-            case 'G': // G2: Bottom Line.
+            case 'G': 
                 yPos = staffTop + (4 * lineSpacing);
                 break;
-            case 'F': // F2: Space below staff.
+            case 'F': 
                 yPos = staffTop + (4.5 * lineSpacing);
                 break;
-            case 'Eb': // Eb2: Space below 1st Ledger Line? 
+            case 'Eb': 
                 yPos = staffTop + (5 * lineSpacing);
                 needsLedger = true;
                 break;
-            case 'D': // D2: Space below E2 (1st Ledger).
+            case 'D': 
                 yPos = staffTop + (5.5 * lineSpacing);
                 needsLedger = true;
                 break;
-            case 'C': // C2: 2nd Ledger Line.
+            case 'C': 
                 yPos = staffTop + (6 * lineSpacing);
                 needsLedger = true;
                 break;
@@ -806,13 +855,11 @@
             }
         }
 
-        // Note Name Label
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#3e2723";
-        ctx.fillText(note.name, centerX - 8, yPos + 40);
+        // Removed Canvas Text
     }
 
     drawStaff();
+    updateNoteLabel();
 
 </script>
 </body>
