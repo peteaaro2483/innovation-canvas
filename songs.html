@@ -274,7 +274,7 @@
     
     <!-- MENU -->
     <nav class="top-nav">
-        <a href="bandpracticestudio.html" class="home-btn">🏠 Home</a>
+        <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
             <button onclick="toggleMenu()" class="dropbtn">Apps ▼</button>
             <div id="myDropdown" class="dropdown-content">
@@ -657,22 +657,19 @@
             ctx.beginPath();
             ctx.strokeStyle = "black";
             ctx.lineWidth = 2;
-            if (yPos >= middleY) {
-                ctx.moveTo(centerX - 7, yPos); // Stem Up (left side)
-                ctx.lineTo(centerX - 7, yPos - 35);
-            } else {
-                ctx.moveTo(centerX - 7, yPos); // Stem Down (left side? No standard is right side)
-                // Actually Standard: Up on Right, Down on Left.
-                // Reset logic:
-                if (yPos >= middleY) {
-                    // Up stem goes on right side of head
-                    ctx.moveTo(centerX + 7, yPos);
-                    ctx.lineTo(centerX + 7, yPos - 35);
-                } else {
-                    // Down stem goes on left side of head
-                    ctx.moveTo(centerX - 7, yPos);
-                    ctx.lineTo(centerX - 7, yPos + 35);
-                }
+            
+            // Standard Rule: Notes below the middle line stem UP. 
+            // Notes on or above the middle line stem DOWN.
+            // Canvas Y increases downwards, so yPos > middleY is "below" the line.
+            
+            if (yPos > middleY) { 
+                // Stem UP -> Attached to RIGHT side
+                ctx.moveTo(centerX + 7, yPos); 
+                ctx.lineTo(centerX + 7, yPos - 35);
+            } else { 
+                // Stem DOWN -> Attached to LEFT side
+                ctx.moveTo(centerX - 7, yPos); 
+                ctx.lineTo(centerX - 7, yPos + 35);
             }
             ctx.stroke();
         }
