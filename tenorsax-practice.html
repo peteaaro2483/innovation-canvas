@@ -36,6 +36,68 @@
             text-align: center;
         }
 
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f6ddcc;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
@@ -66,6 +128,11 @@
             background: white;
             color: var(--primary);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Label Selector */
+        .mode-selector.labels {
+            margin-top: -10px;
         }
 
         /* Controls */
@@ -118,6 +185,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Fixed Note Label Style (Overlay Position) */
+        .fixed-note-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+            z-index: 5;
         }
 
         .overlay {
@@ -286,72 +369,13 @@
             font-size: 0.9rem;
             border: 1px solid #d35400;
         }
-        /* Navigation Menu Styles */
-        .top-nav {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-
-        .home-btn {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropbtn {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .dropdown-content a {
-            color: var(--primary);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-
-        .show { display: block; }
     </style>
 </head>
 <body>
 
-<!-- MENU START -->
+<div class="container">
+    
+    <!-- MENU START -->
     <nav class="top-nav">
         <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
@@ -371,7 +395,7 @@
         </div>
     </nav>
     <!-- MENU END -->
-    
+
     <h1>🎷 Tenor Sax Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
@@ -380,8 +404,16 @@
 
     <!-- Range Selector -->
     <div class="mode-selector">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Range:</span>
         <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes (C-G)</button>
         <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (C-C)</button>
+    </div>
+
+    <!-- Label Selector -->
+    <div class="mode-selector labels">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Labels:</span>
+        <button class="mode-btn active" id="dispName" onclick="setDisplayMode('name')">Note Names</button>
+        <button class="mode-btn" id="dispDegree" onclick="setDisplayMode('degree')">Scale Degrees</button>
     </div>
 
     <div class="controls">
@@ -394,6 +426,8 @@
 
     <div class="display-area">
         <div id="successOverlay" class="overlay">✅</div>
+        <!-- Note Label INSIDE display-area -->
+        <div id="noteLabel" class="fixed-note-label">--</div>
         <canvas id="staffCanvas" width="600" height="200"></canvas>
     </div>
 
@@ -440,23 +474,7 @@
     // Scale: Written C Major (Concert Bb Major).
     
     // Key Map Array Index: [Octave, L1, L2, L3, R1, R2, R3, Pinky]
-
-    function toggleMenu() {
-        document.getElementById("myDropdown").classList.toggle("show");
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
+    
     const FULL_SCALE = [
         // Written C4 (Low C) - LH 123 + RH 123 + Pinky
         { name: "C", octave: 4, frequency: 116.54, keys: [0, 1, 1, 1, 1, 1, 1, 1] }, 
@@ -493,6 +511,7 @@
     
     let currentLevel = 1;
     let currentRange = 5; // 5 or 8
+    let displayMode = 'name'; // NEW
     let activeNotes = FULL_SCALE.slice(0, 5);
     
     let currentNoteIndex = 0;
@@ -512,6 +531,25 @@
     // Key Elements Map: [Oct, L1, L2, L3, R1, R2, R3, Pinky]
     const keyIds = ['k-oct', 'k-l1', 'k-l2', 'k-l3', 'k-r1', 'k-r2', 'k-r3', 'k-rp'];
 
+    /* MENU JS START */
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+    /* MENU JS END */
+
     // --- Mode Selection ---
     function setRange(range) {
         currentRange = range;
@@ -527,6 +565,26 @@
         if(isListening) {
             setLevel(currentLevel);
         }
+    }
+
+    // NEW: Set Display Mode
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('dispName').classList.toggle('active', mode === 'name');
+        document.getElementById('dispDegree').classList.toggle('active', mode === 'degree');
+        updateNoteLabel(); 
+    }
+
+    // NEW: Helper to update the fixed DOM label
+    function updateNoteLabel() {
+        let labelText = currentNote.name;
+        if (displayMode === 'degree') {
+            const index = FULL_SCALE.indexOf(currentNote);
+            if (index !== -1) {
+                labelText = (index + 1).toString();
+            }
+        }
+        document.getElementById('noteLabel').innerText = labelText;
     }
 
     // --- Audio System ---
@@ -659,6 +717,7 @@
 
         drawStaff();
         updateKeys();
+        updateNoteLabel();
     }
 
     function updateKeys() {
@@ -819,13 +878,11 @@
             ctx.stroke();
         }
 
-        // Note Name Label
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#a04000";
-        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
+        // Removed Canvas Text
     }
 
     drawStaff();
+    updateNoteLabel();
 
 </script>
 </body>
