@@ -1,50 +1,4 @@
-<a href="piano-practice.html">Piano</a>
-
-**Updated Menu Block for copy-pasting:**
-```html
-    <!-- MENU START -->
-    <nav class="top-nav">
-        <a href="index.html" class="home-btn">🏠 Home</a>
-        <div class="dropdown">
-            <button onclick="toggleMenu()" class="dropbtn">Switch Instrument ▼</button>
-            <div id="myDropdown" class="dropdown-content">
-                <a href="flute-practice.html">Flute</a>
-                <a href="clarinet-practice.html">Clarinet</a>
-                <a href="altosax-practice.html">Alto Sax</a>
-                <a href="tenorsax-practice.html">Tenor Sax</a>
-                <a href="trumpet-practice.html">Trumpet</a>
-                <a href="trombone-practice.html">Trombone</a>
-                <a href="baritone-practice.html">Baritone</a>
-                <a href="tuba-practice.html">Tuba</a>
-                <a href="bass-practice.html">Bass Guitar</a>
-                <a href="piano-practice.html">Piano</a>
-            </div>
-        </div>
-    </nav>
-    <!-- MENU END --><a href="piano-practice.html">Piano</a>
-
-**Updated Menu Block for copy-pasting:**
-```html
-    <!-- MENU START -->
-    <nav class="top-nav">
-        <a href="index.html" class="home-btn">🏠 Home</a>
-        <div class="dropdown">
-            <button onclick="toggleMenu()" class="dropbtn">Switch Instrument ▼</button>
-            <div id="myDropdown" class="dropdown-content">
-                <a href="flute-practice.html">Flute</a>
-                <a href="clarinet-practice.html">Clarinet</a>
-                <a href="altosax-practice.html">Alto Sax</a>
-                <a href="tenorsax-practice.html">Tenor Sax</a>
-                <a href="trumpet-practice.html">Trumpet</a>
-                <a href="trombone-practice.html">Trombone</a>
-                <a href="baritone-practice.html">Baritone</a>
-                <a href="tuba-practice.html">Tuba</a>
-                <a href="bass-practice.html">Bass Guitar</a>
-                <a href="piano-practice.html">Piano</a>
-            </div>
-        </div>
-    </nav>
-    <!-- MENU END --><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -82,6 +36,68 @@
             text-align: center;
         }
 
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eceff1;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
@@ -112,6 +128,11 @@
             background: white;
             color: var(--primary);
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* Label Selector */
+        .mode-selector.labels {
+            margin-top: -10px;
         }
 
         /* Controls */
@@ -164,6 +185,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+        }
+
+        /* Fixed Note Label Style (Overlay Position) */
+        .fixed-note-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+            z-index: 5;
         }
 
         .overlay {
@@ -298,75 +335,12 @@
             font-size: 0.9rem;
             border: 1px solid #b0bec5;
         }
-        /* Navigation Menu Styles */
-        .top-nav {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-
-        .home-btn {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropbtn {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .dropdown-content a {
-            color: var(--primary);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-
-        .show { display: block; }
     </style>
 </head>
 <body>
 
-<a href="piano-practice.html">Piano</a>
-
-**Updated Menu Block for copy-pasting:**
-```html
+<div class="container">
+    
     <!-- MENU START -->
     <nav class="top-nav">
         <a href="index.html" class="home-btn">🏠 Home</a>
@@ -387,8 +361,8 @@
         </div>
     </nav>
     <!-- MENU END -->
-    
-    <h1>🎺 Baritone Practice Scale Builder</h1>
+
+    <h1>🎺 Baritone Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
         Click "Start Microphone" to begin. Ensure you are in a quiet room.
@@ -396,8 +370,16 @@
 
     <!-- Range Selector -->
     <div class="mode-selector">
-        <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes (Bb-F)</button>
-        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Bb-Bb)</button>
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Range:</span>
+        <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes</button>
+        <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale</button>
+    </div>
+
+    <!-- Label Selector -->
+    <div class="mode-selector labels">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Labels:</span>
+        <button class="mode-btn active" id="dispName" onclick="setDisplayMode('name')">Note Names</button>
+        <button class="mode-btn" id="dispDegree" onclick="setDisplayMode('degree')">Scale Degrees</button>
     </div>
 
     <div class="controls">
@@ -410,6 +392,8 @@
 
     <div class="display-area">
         <div id="successOverlay" class="overlay">✅</div>
+        <!-- Note Label INSIDE display-area -->
+        <div id="noteLabel" class="fixed-note-label">--</div>
         <canvas id="staffCanvas" width="600" height="200"></canvas>
     </div>
 
@@ -442,23 +426,6 @@
     // BARITONE B.C.: Concert Pitch (Bass Clef).
     // Beginner Scale: Bb Major (Bb, C, D, Eb, F, G, A, Bb)
     // Valve Logic: 1, 2, 3
-
-    function toggleMenu() {
-        document.getElementById("myDropdown").classList.toggle("show");
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
     
     const FULL_SCALE = [
         // Bb2 (2nd line from bottom) - Open [0,0,0]
@@ -496,6 +463,7 @@
     
     let currentLevel = 1;
     let currentRange = 5; // 5 or 8
+    let displayMode = 'name'; // NEW
     let activeNotes = FULL_SCALE.slice(0, 5);
     
     let currentNoteIndex = 0;
@@ -513,6 +481,25 @@
     const fingeringDisplay = document.getElementById('fingeringDisplay');
     const valveEls = [document.getElementById('v1'), document.getElementById('v2'), document.getElementById('v3')];
 
+    /* MENU JS START */
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+    /* MENU JS END */
+
     // --- Mode Selection ---
     function setRange(range) {
         currentRange = range;
@@ -528,6 +515,26 @@
         if(isListening) {
             setLevel(currentLevel);
         }
+    }
+
+    // NEW: Set Display Mode
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('dispName').classList.toggle('active', mode === 'name');
+        document.getElementById('dispDegree').classList.toggle('active', mode === 'degree');
+        updateNoteLabel(); 
+    }
+
+    // NEW: Helper to update the fixed DOM label
+    function updateNoteLabel() {
+        let labelText = currentNote.name;
+        if (displayMode === 'degree') {
+            const index = FULL_SCALE.indexOf(currentNote);
+            if (index !== -1) {
+                labelText = (index + 1).toString();
+            }
+        }
+        document.getElementById('noteLabel').innerText = labelText;
     }
 
     // --- Audio System ---
@@ -660,6 +667,7 @@
 
         drawStaff();
         updateValves();
+        updateNoteLabel();
     }
 
     function updateValves() {
@@ -818,13 +826,11 @@
             ctx.fillText("♭", centerX - 25, yPos + 8);
         }
 
-        // Note Name Label
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#455a64";
-        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
+        // Note Name Label is handled by DOM overlay now
     }
 
     drawStaff();
+    updateNoteLabel();
 
 </script>
 </body>
