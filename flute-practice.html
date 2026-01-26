@@ -36,6 +36,68 @@
             text-align: center;
         }
 
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0f2f1;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
         h1 {
             margin-top: 0;
             font-size: 1.5rem;
@@ -145,6 +207,22 @@
         #staffCanvas {
             width: 100%;
             height: 100%;
+        }
+
+        /* Fixed Note Label Style (Overlay Position) */
+        .fixed-note-label {
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 1;
+            z-index: 5;
         }
 
         /* Flute Keys Visualization */
@@ -272,72 +350,13 @@
             font-size: 0.9rem;
             border: 1px solid #80cbc4; /* Teal 200 */
         }
-        /* Navigation Menu Styles */
-        .top-nav {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-
-        .home-btn {
-            text-decoration: none;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropbtn {
-            background-color: var(--primary);
-            color: white;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            border: none;
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: #f9f9f9;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 100;
-            border-radius: 6px;
-            overflow: hidden;
-            text-align: left;
-        }
-
-        .dropdown-content a {
-            color: var(--primary);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-        }
-
-        .dropdown-content a:hover {
-            background-color: #ddd;
-        }
-
-        .show { display: block; }
     </style>
 </head>
 <body>
 
-<!-- MENU START -->
+<div class="container">
+    
+    <!-- MENU START -->
     <nav class="top-nav">
         <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
@@ -351,13 +370,11 @@
                 <a href="trombone-practice.html">Trombone</a>
                 <a href="baritone-practice.html">Baritone</a>
                 <a href="tuba-practice.html">Tuba</a>
-                <a href="bass-practice.html">Bass Guitar</a>
-                <a href="piano-practice.html">Piano</a>
             </div>
         </div>
     </nav>
     <!-- MENU END -->
-    
+
     <h1>🎶 Flute Scale Builder</h1>
     
     <div class="instructions" id="messageBox">
@@ -366,8 +383,16 @@
 
     <!-- Range Selector -->
     <div class="mode-selector">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Range:</span>
         <button class="mode-btn active" id="mode5" onclick="setRange(5)">First 5 Notes (Bb-F)</button>
         <button class="mode-btn" id="mode8" onclick="setRange(8)">Full Scale (Bb-Bb)</button>
+    </div>
+
+    <!-- Label Selector -->
+    <div class="mode-selector" style="margin-top: -10px;">
+        <span style="font-size: 0.9rem; color: #7f8c8d; margin-right: 10px;">Labels:</span>
+        <button class="mode-btn active" id="dispName" onclick="setDisplayMode('name')">Note Names</button>
+        <button class="mode-btn" id="dispDegree" onclick="setDisplayMode('degree')">Scale Degrees</button>
     </div>
 
     <div class="controls">
@@ -380,6 +405,8 @@
 
     <div class="display-area">
         <div id="successOverlay" class="overlay">✅</div>
+        <!-- Note Label INSIDE display-area -->
+        <div id="noteLabel" class="fixed-note-label">--</div>
         <canvas id="staffCanvas" width="600" height="200"></canvas>
     </div>
 
@@ -442,23 +469,7 @@
     // FLUTE: Concert Pitch Instrument.
     // Beginner Scale: Bb Major (Bb, C, D, Eb, F, G, A, Bb)
     // Keys Array Index: [Thumb, L1, L2, L3, R1, R2, R3, Pinky]
-
-    function toggleMenu() {
-        document.getElementById("myDropdown").classList.toggle("show");
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropbtn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
+    
     const FULL_SCALE = [
         // Bb4 (Middle line) - "1 and 1" fingering usually (Thumb, L1, R1, Pinky)
         { name: "Bb", octave: 4, frequency: 466.16, keys: [1, 1, 0, 0, 1, 0, 0, 1] }, 
@@ -495,6 +506,7 @@
     
     let currentLevel = 1;
     let currentRange = 5; // 5 or 8
+    let displayMode = 'name'; // NEW
     let activeNotes = FULL_SCALE.slice(0, 5);
     
     let currentNoteIndex = 0;
@@ -514,6 +526,25 @@
     // Key Elements Map
     const keyIds = ['k-th', 'k-l1', 'k-l2', 'k-l3', 'k-r1', 'k-r2', 'k-r3', 'k-rp'];
 
+    /* MENU JS START */
+    function toggleMenu() {
+        document.getElementById("myDropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+    /* MENU JS END */
+
     // --- Mode Selection ---
     function setRange(range) {
         currentRange = range;
@@ -529,6 +560,26 @@
         if(isListening) {
             setLevel(currentLevel);
         }
+    }
+
+    // NEW: Set Display Mode
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('dispName').classList.toggle('active', mode === 'name');
+        document.getElementById('dispDegree').classList.toggle('active', mode === 'degree');
+        updateNoteLabel(); 
+    }
+
+    // NEW: Helper to update the fixed DOM label
+    function updateNoteLabel() {
+        let labelText = currentNote.name;
+        if (displayMode === 'degree') {
+            const index = FULL_SCALE.indexOf(currentNote);
+            if (index !== -1) {
+                labelText = (index + 1).toString();
+            }
+        }
+        document.getElementById('noteLabel').innerText = labelText;
     }
 
     // --- Audio System ---
@@ -560,7 +611,7 @@
         }
     }
 
-    // Autocorrelation algorithm for pitch detection
+    // Autocorrelation algorithm
     function autoCorrelate(buf, sampleRate) {
         let SIZE = buf.length;
         let rms = 0;
@@ -571,7 +622,6 @@
         }
         rms = Math.sqrt(rms / SIZE);
 
-        // Noise gate
         if (rms < 0.015) return -1; 
 
         let r1 = 0, r2 = SIZE - 1, thres = 0.2;
@@ -652,23 +702,20 @@
     }
 
     function loadNextNote() {
-        // Selection Logic
         if (currentLevel === 1 || currentLevel === 2) {
-            // Linear
             if (currentNoteIndex >= activeNotes.length) currentNoteIndex = 0;
             currentNote = activeNotes[currentNoteIndex];
         } else {
-            // Random
             let randomIndex = Math.floor(Math.random() * activeNotes.length);
             currentNote = activeNotes[randomIndex];
         }
 
         drawStaff();
         updateKeys();
+        updateNoteLabel();
     }
 
     function updateKeys() {
-        // keys array: [Thumb, L1, L2, L3, R1, R2, R3, Pinky]
         const k = currentNote.keys;
         
         keyIds.forEach((id, index) => {
@@ -694,32 +741,25 @@
             feedbackText.style.color = "orange";
             
             if (noteHeldFrames > FRAMES_REQUIRED) {
-                // SUCCESS
-                processingSuccess = true; // Lock input
-                
-                // Visual Feedback
+                processingSuccess = true; 
                 feedbackText.innerText = "Correct!";
                 feedbackText.className = "feedback success-msg";
                 document.getElementById('successOverlay').style.display = 'flex'; 
                 
                 noteHeldFrames = 0;
                 
-                // Logic for progression
                 setTimeout(() => {
-                    // Reset UI
                     document.getElementById('successOverlay').style.display = 'none'; 
                     feedbackText.innerText = "Play..."; 
                     feedbackText.style.color = "var(--primary)";
                     
-                    // Advance Note
                     if (currentLevel <= 2) currentNoteIndex++;
                     loadNextNote();
                     
-                    processingSuccess = false; // Unlock input
+                    processingSuccess = false; 
                 }, 2000); 
             }
         } else {
-            // Reset if they play a wrong note
             noteHeldFrames = Math.max(0, noteHeldFrames - 1); 
         }
     }
@@ -727,7 +767,6 @@
     // --- Canvas Drawing ---
 
     function drawStaff() {
-        // Clear
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         const startX = 50;
@@ -746,17 +785,15 @@
             ctx.stroke();
         }
 
-        // Draw Treble Clef (Simplified)
+        // Draw Treble Clef
         ctx.font = "60px serif";
         ctx.fillStyle = "#000";
         ctx.fillText("𝄞", startX + 10, staffTop + 70);
 
-        // Draw Note
         drawNoteHead(currentNote);
     }
 
     function drawNoteHead(note) {
-        // Position logic
         const staffTop = 80;
         const lineSpacing = 20;
         const centerX = 300;
@@ -764,65 +801,37 @@
         let yPos;
         let needsLedger = false;
 
-        // Treble Staff:
+        // Note: Written Pitch for Clarinet
         // Top Line (F5): staffTop 
         // Bottom Line (E4): staffTop + 4*spacing
         
-        // Frequencies:
-        // Bb4: Middle line (B)
-        // F5: Top line
-        
-        // Wait, standard Treble Staff Lines are E G B D F (Bottom to Top)
-        // E4, G4, B4, D5, F5
-        
-        // So staffTop (line 1, top) is F5.
-        // staffTop + 20 is D5
-        // staffTop + 40 is B4
-        // staffTop + 60 is G4
-        // staffTop + 80 is E4
-        
         switch(note.name) {
-            case 'Bb': 
+            case 'C': 
                 if (note.octave === 5) {
-                    // Bb5: Space above high A (A is ledger line). 
-                    // High G is space above top line. High A is line above. Bb is space above that.
-                    // Let's count from F5 (top line = staffTop)
-                    // G5 = staffTop - 10
-                    // A5 = staffTop - 20 (Ledger)
-                    // Bb5 = staffTop - 30 (Above ledger)
-                    yPos = staffTop - 30;
-                    needsLedger = true; // For the A line below it? Usually implies ledger line through A position? No, space above ledger line.
-                    // We draw the ledger line at A5 position.
+                   yPos = staffTop + 30; // 1.5 spaces
                 } else {
-                    // Bb4: Middle line.
-                    yPos = staffTop + 40; 
+                   // C4: Ledger line below.
+                   yPos = staffTop + (5 * lineSpacing);
+                   needsLedger = true;
                 }
                 break;
-            case 'C': // C5: 3rd Space (from bottom). F, E, D, C. 
-                      // F5(top), E5(space), D5(line), C5(space).
-                      // staffTop + 30
-                yPos = staffTop + 30;
+            case 'D': 
+                yPos = staffTop + (4.5 * lineSpacing);
                 break;
-            case 'D': // D5: 4th Line (from bottom). 2nd line from top.
-                      // staffTop + 20
-                yPos = staffTop + 20;
+            case 'E': 
+                yPos = staffTop + (4 * lineSpacing); 
                 break;
-            case 'Eb': // Eb5: Top Space (4th space).
-                      // staffTop + 10
-                yPos = staffTop + 10;
+            case 'F': 
+                yPos = staffTop + (3.5 * lineSpacing);
                 break;
-            case 'F': // F5: Top Line.
-                      // staffTop
-                yPos = staffTop;
+            case 'G': 
+                yPos = staffTop + (3 * lineSpacing);
                 break;
-            case 'G': // G5: Space above staff.
-                      // staffTop - 10
-                yPos = staffTop - 10;
+            case 'A': 
+                yPos = staffTop + (2.5 * lineSpacing);
                 break;
-            case 'A': // A5: Ledger Line above staff.
-                      // staffTop - 20
-                yPos = staffTop - 20;
-                needsLedger = true;
+            case 'B': 
+                yPos = staffTop + (2 * lineSpacing);
                 break;
         }
 
@@ -833,10 +842,11 @@
         ctx.fill();
 
         // Draw Stem
-        // Rule: On or above middle line (Bb4/B4) -> Stem Down.
-        // Below middle line -> Stem Up.
-        // Since our scale starts on Bb4 (middle line), ALL stems will be DOWN.
-        let stemDown = true;
+        // On or above B4 -> Stem Down
+        let stemDown = false;
+        if (note.name === 'B' || (note.name === 'C' && note.octave === 5)) {
+            stemDown = true;
+        }
 
         ctx.beginPath();
         if (stemDown) {
@@ -848,30 +858,18 @@
         }
         ctx.stroke();
 
-        // Draw Flat Symbol for Bb and Eb
-        if (note.name.includes('b')) {
-            ctx.font = "24px serif";
-            ctx.fillText("♭", centerX - 25, yPos + 8);
-        }
-
-        // Ledger Lines
         if (needsLedger) {
-            // Logic for A5 and Bb5
-            // Line at A5 position (staffTop - 20)
             ctx.beginPath();
-            ctx.moveTo(centerX - 20, staffTop - 20);
-            ctx.lineTo(centerX + 20, staffTop - 20);
+            ctx.moveTo(centerX - 20, yPos);
+            ctx.lineTo(centerX + 20, yPos);
             ctx.stroke();
         }
 
-        // Note Name Label
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "#2c3e50";
-        ctx.fillText(note.name, centerX - 8, yPos + (stemDown ? -20 : 40));
+        // Removed Canvas Text
     }
 
-    // Initial Draw
     drawStaff();
+    updateNoteLabel();
 
 </script>
 </body>
