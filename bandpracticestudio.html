@@ -90,6 +90,9 @@
 
         /* Instrument Specific Colors (Matching the Widgets) */
         
+        /* Songs: Special Gradient */
+        .card.songs { background: linear-gradient(135deg, #8e44ad, #c0392b); }
+
         /* Trumpet: Blue */
         .card.trumpet { background: linear-gradient(135deg, #2c3e50, #34495e); }
         
@@ -113,6 +116,12 @@
         
         /* Tuba: Deep Brown */
         .card.tuba { background: linear-gradient(135deg, #3e2723, #1b0000); }
+
+        /* Bass: Indigo */
+        .card.bass { background: linear-gradient(135deg, #283593, #1a237e); }
+
+        /* Piano: Black/Dark Grey */
+        .card.piano { background: linear-gradient(135deg, #212121, #424242); }
 
         footer {
             margin-top: 60px;
@@ -144,8 +153,17 @@
 
     <div class="grid-container">
         
+        <!-- NEW: Song Studio -->
+        <a href="songs.html" class="card songs" style="grid-column: 1 / -1;">
+            <div class="card-content">
+                <span class="card-title">🎵 Song Studio</span>
+                <span>Play Full Songs</span>
+            </div>
+            <div class="card-icon">🎼</div>
+        </a>
+
         <!-- Woodwinds -->
-        <a href="https://peteaaro2483.github.io/innovation-canvas/flute-practice.html" class="card flute">
+        <a href="flute-practice.html" class="card flute">
             <div class="card-content">
                 <span class="card-title">Flute</span>
                 <span>Scale Builder</span>
@@ -153,7 +171,7 @@
             <div class="card-icon">🎶</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/clarinet-practice.html" class="card clarinet">
+        <a href="clarinet-practice.html" class="card clarinet">
             <div class="card-content">
                 <span class="card-title">Clarinet</span>
                 <span>Scale Builder</span>
@@ -161,7 +179,7 @@
             <div class="card-icon">🎵</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/altosax-practice.html" class="card alto">
+        <a href="altosax-practice.html" class="card alto">
             <div class="card-content">
                 <span class="card-title">Alto Sax</span>
                 <span>Scale Builder</span>
@@ -169,7 +187,7 @@
             <div class="card-icon">🎷</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/tenorsax-practice.html" class="card tenor">
+        <a href="tenorsax-practice.html" class="card tenor">
             <div class="card-content">
                 <span class="card-title">Tenor Sax</span>
                 <span>Scale Builder</span>
@@ -178,7 +196,7 @@
         </a>
 
         <!-- Brass -->
-        <a href="https://peteaaro2483.github.io/innovation-canvas/trumpet-practice.html" class="card trumpet">
+        <a href="trumpet-practice.html" class="card trumpet">
             <div class="card-content">
                 <span class="card-title">Trumpet</span>
                 <span>Scale Builder</span>
@@ -186,7 +204,7 @@
             <div class="card-icon">🎺</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/trombone-practice.html" class="card trombone">
+        <a href="trombone-practice.html" class="card trombone">
             <div class="card-content">
                 <span class="card-title">Trombone</span>
                 <span>Scale Builder</span>
@@ -194,7 +212,7 @@
             <div class="card-icon">🎺</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/baritone-practice.html" class="card baritone">
+        <a href="baritone-practice.html" class="card baritone">
             <div class="card-content">
                 <span class="card-title">Baritone</span>
                 <span>Scale Builder</span>
@@ -202,12 +220,29 @@
             <div class="card-icon">🎺</div>
         </a>
 
-        <a href="https://peteaaro2483.github.io/innovation-canvas/tuba-practice.html" class="card tuba">
+        <a href="tuba-practice.html" class="card tuba">
             <div class="card-content">
                 <span class="card-title">Tuba</span>
                 <span>Scale Builder</span>
             </div>
             <div class="card-icon">🎺</div>
+        </a>
+
+        <!-- Rhythm / Other -->
+        <a href="bass-practice.html" class="card bass">
+            <div class="card-content">
+                <span class="card-title">Bass Guitar</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎸</div>
+        </a>
+
+        <a href="piano-practice.html" class="card piano">
+            <div class="card-content">
+                <span class="card-title">Piano</span>
+                <span>Scale Builder</span>
+            </div>
+            <div class="card-icon">🎹</div>
         </a>
 
     </div>
