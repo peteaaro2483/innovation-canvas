@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Band Practice: Song Studio</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --bg: #f4f6f7;
+            --surface: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--primary);
+        }
+
+        .container {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 24px;
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Navigation Menu Styles */
+        .top-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropbtn {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #f9f9f9;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 100;
+            border-radius: 6px;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .dropdown-content a {
+            color: var(--primary);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #ddd;
+        }
+
+        .show { display: block; }
+
+        h1 { margin-top: 0; font-size: 1.8rem; }
+
+        /* Setup Panel */
+        .setup-panel {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #bdc3c7;
+            font-size: 1rem;
+            min-width: 200px;
+        }
+
+        /* Toggle Buttons */
+        .toggle-group {
+            display: flex;
+            background: #bdc3c7;
+            border-radius: 6px;
+            padding: 2px;
+        }
+
+        .toggle-btn {
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #2c3e50;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: white;
+            font-weight: bold;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Sheet Music Scroller */
+        .sheet-music-container {
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            background: white;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            scrollbar-width: thin; 
+        }
+
+        /* The flex strip holding measures/notes */
+        .music-strip {
+            display: inline-flex;
+            align-items: stretch;
+            padding: 0 50px; 
+            min-height: 320px; 
+        }
+
+        /* Individual Segment (Note or Barline) */
+        .score-segment {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+
+        /* Metadata below the staff */
+        .meta-info {
+            margin-top: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 50px;
+        }
+
+        .note-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+
+        .lyric {
+            font-size: 0.9rem;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        /* Active State */
+        .score-segment.active .note-name {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+        
+        .score-segment.active canvas {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 4px;
+        }
+
+        .score-segment.played .note-name {
+            color: var(--success);
+        }
+        
+        .score-segment.played canvas {
+            background-color: rgba(39, 174, 96, 0.1);
+            border-radius: 4px;
+        }
+
+        /* Bar Line Styling */
+        .bar-line {
+            width: 2px;
+            background-color: #000;
+            margin: 0 10px;
+            height: 100px; 
+            align-self: flex-start; 
+            margin-top: 80px; 
+        }
+
+        .btn-start {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .feedback-text {
+            font-size: 1.5rem;
+            height: 40px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            border: 1px solid #ffeeba;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <!-- MENU -->
+    <nav class="top-nav">
+        <a href="index.html" class="home-btn">🏠 Home</a>
+        <div class="dropdown">
+            <button onclick="toggleMenu()" class="dropbtn">Apps ▼</button>
+            <div id="myDropdown" class="dropdown-content">
+                <a href="songs.html">🎵 Song Studio</a>
+                <hr style="margin:0; border:0; border-top:1px solid #eee;">
+                <a href="flute-practice.html">Flute</a>
+                <a href="clarinet-practice.html">Clarinet</a>
+                <a href="altosax-practice.html">Alto Sax</a>
+                <a href="tenorsax-practice.html">Tenor Sax</a>
+                <a href="trumpet-practice.html">Trumpet</a>
+                <a href="trombone-practice.html">Trombone</a>
+                <a href="baritone-practice.html">Baritone</a>
+                <a href="tuba-practice.html">Tuba</a>
+            </div>
+        </div>
+    </nav>
+
+    <h1>🎵 Band Song Studio</h1>
+    
+    <div class="setup-panel">
+        <div class="control-group">
+            <label>Instrument</label>
+            <select id="instrumentSelect" onchange="loadSong()">
+                <option value="flute">Flute</option>
+                <option value="clarinet">Clarinet</option>
+                <option value="altosax">Alto Sax</option>
+                <option value="tenorsax">Tenor Sax</option>
+                <option value="trumpet" selected>Trumpet</option>
+                <option value="trombone">Trombone</option>
+                <option value="baritone">Baritone (B.C.)</option>
+                <option value="tuba">Tuba</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Song</label>
+            <select id="songSelect" onchange="loadSong()">
+                <option value="hotcross">Hot Cross Buns</option>
+                <option value="mary">Mary Had a Little Lamb</option>
+                <option value="lightlyrow">Lightly Row</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>Notation</label>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="btnName" onclick="setDisplayMode('name')">Names</button>
+                <button class="toggle-btn" id="btnDegree" onclick="setDisplayMode('degree')">Numbers</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="instructions" id="msgBox">
+        Select your instrument, then click Start to enable the microphone.
+    </div>
+
+    <div class="feedback-text" id="feedback">Ready?</div>
+
+    <div class="sheet-music-container" id="scrollContainer">
+        <div class="music-strip" id="musicStrip"></div>
+    </div>
+
+    <button class="btn-start" id="btnStart" onclick="startAudio()">🎤 Start Playing</button>
+    <div id="debug" style="margin-top:10px; color:#aaa; font-size:0.8rem;"></div>
+
+</div>
+
+<script>
+    // --- MUSIC DATA ---
+    
+    // UPDATED INSTRUMENTS with Correct Octaves and Transposition Logic
+    // baseOctave: The written octave where the scale/song typically starts for a beginner
+    // transpose: Semitones DOWN from Written to Concert
+    const INSTRUMENTS = {
+        'flute':    { name: "Flute", keyOffset: 0, clef: 'treble', baseOctave: 4, transpose: 0 }, 
+        'clarinet': { name: "Clarinet", keyOffset: 2, clef: 'treble', baseOctave: 4, transpose: 2 }, 
+        'altosax':  { name: "Alto Sax", keyOffset: 9, clef: 'treble', baseOctave: 4, transpose: 9 }, 
+        'tenorsax': { name: "Tenor Sax", keyOffset: 14, clef: 'treble', baseOctave: 5, transpose: 14 }, 
+        'trumpet':  { name: "Trumpet", keyOffset: 2, clef: 'treble', baseOctave: 4, transpose: 2 }, 
+        'trombone': { name: "Trombone", keyOffset: 0, clef: 'bass', baseOctave: 2, transpose: 0 }, // Concert Pitch
+        'baritone': { name: "Baritone", keyOffset: 0, clef: 'bass', baseOctave: 2, transpose: 0 }, // Concert Pitch
+        'tuba':     { name: "Tuba", keyOffset: 0, clef: 'bass', baseOctave: 1, transpose: 0 }  // Concert Pitch
+    };
+
+    const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
+    
+    // Song Data
+    const SONGS = {
+        'hotcross': {
+            title: "Hot Cross Buns",
+            tonicConcert: "Bb", 
+            tonicIndex: 10,
+            sequence: [
+                { offset: 4, lyric: "Hot" }, { offset: 2, lyric: "Cross" }, { offset: 0, lyric: "Buns" }, { offset: null, lyric: "rest" }, 
+                { isBar: true },
+                { offset: 4, lyric: "Hot" }, { offset: 2, lyric: "Cross" }, { offset: 0, lyric: "Buns" }, { offset: null, lyric: "rest" },
+                { isBar: true },
+                { offset: 0, lyric: "One" }, { offset: 0, lyric: "a" }, { offset: 0, lyric: "pen-" }, { offset: 0, lyric: "ny" },
+                { offset: 2, lyric: "Two" }, { offset: 2, lyric: "a" }, { offset: 2, lyric: "pen-" }, { offset: 2, lyric: "ny" },
+                { isBar: true },
+                { offset: 4, lyric: "Hot" }, { offset: 2, lyric: "Cross" }, { offset: 0, lyric: "Buns" }, { offset: null, lyric: "rest" },
+                { isBar: true }
+            ]
+        },
+        'mary': {
+            title: "Mary Had a Little Lamb",
+            tonicConcert: "Bb",
+            tonicIndex: 10,
+            sequence: [
+                { offset: 4, lyric: "Ma" }, { offset: 2, lyric: "ry" }, { offset: 0, lyric: "had" }, { offset: 2, lyric: "a" },
+                { offset: 4, lyric: "lit-" }, { offset: 4, lyric: "tle" }, { offset: 4, lyric: "lamb" },
+                { isBar: true },
+                { offset: 2, lyric: "lit-" }, { offset: 2, lyric: "tle" }, { offset: 2, lyric: "lamb" },
+                { offset: 4, lyric: "lit-" }, { offset: 7, lyric: "tle" }, { offset: 7, lyric: "lamb" },
+                { isBar: true },
+                { offset: 4, lyric: "Ma" }, { offset: 2, lyric: "ry" }, { offset: 0, lyric: "had" }, { offset: 2, lyric: "a" },
+                { offset: 4, lyric: "lit-" }, { offset: 4, lyric: "tle" }, { offset: 4, lyric: "lamb" }, { offset: 4, lyric: "its" },
+                { isBar: true },
+                { offset: 2, lyric: "fleece" }, { offset: 2, lyric: "was" }, { offset: 4, lyric: "white" }, { offset: 2, lyric: "as" },
+                { offset: 0, lyric: "snow" }, { offset: null, lyric: "rest" },
+                { isBar: true }
+            ]
+        },
+        'lightlyrow': {
+            title: "Lightly Row",
+            tonicConcert: "Bb",
+            tonicIndex: 10,
+            sequence: [
+                { offset: 7, lyric: "Light-" }, { offset: 4, lyric: "ly" }, { offset: 4, lyric: "row," }, { offset: null, lyric: "rest" },
+                { isBar: true },
+                { offset: 5, lyric: "light-" }, { offset: 2, lyric: "ly" }, { offset: 2, lyric: "row," }, { offset: null, lyric: "rest" },
+                { isBar: true },
+                { offset: 0, lyric: "O'er" }, { offset: 2, lyric: "the" }, { offset: 4, lyric: "glassy" }, { offset: 5, lyric: "waves" },
+                { offset: 7, lyric: "we" }, { offset: 7, lyric: "go" },
+                { isBar: true },
+                { offset: 7, lyric: "Smooth-" }, { offset: 4, lyric: "ly" }, { offset: 4, lyric: "glide," }, { offset: null, lyric: "rest" },
+                { isBar: true },
+                { offset: 5, lyric: "smooth-" }, { offset: 2, lyric: "ly" }, { offset: 2, lyric: "glide," }, { offset: null, lyric: "rest" },
+                { isBar: true }
+            ]
+        }
+    };
+
+    // --- APP STATE ---
+    let audioContext, analyser, microphone;
+    let isListening = false;
+    let buf = new Float32Array(2048);
+    let currentInstrument = 'trumpet';
+    let currentSong = SONGS['hotcross'];
+    let songObjects = []; 
+    let noteIndex = 0; 
+    let noteHeldFrames = 0;
+    let displayMode = 'name'; 
+    const FRAMES_REQUIRED = 15; 
+
+    const musicStrip = document.getElementById('musicStrip');
+    const scrollContainer = document.getElementById('scrollContainer');
+    const feedback = document.getElementById('feedback');
+
+    // --- INITIALIZATION ---
+    function loadSong() {
+        const instKey = document.getElementById('instrumentSelect').value;
+        const songKey = document.getElementById('songSelect').value;
+        
+        currentInstrument = INSTRUMENTS[instKey];
+        currentSong = SONGS[songKey];
+        
+        processSongData();
+        renderSheetMusic();
+        
+        noteIndex = 0;
+        // Skip bars at start
+        while(noteIndex < songObjects.length && (songObjects[noteIndex].isBar)) {
+            noteIndex++;
+        }
+        
+        noteHeldFrames = 0;
+        updateActiveNote();
+    }
+
+    function setDisplayMode(mode) {
+        displayMode = mode;
+        document.getElementById('btnName').classList.toggle('active', mode === 'name');
+        document.getElementById('btnDegree').classList.toggle('active', mode === 'degree');
+        renderSheetMusic(); 
+        updateActiveNote(); 
+    }
+
+    function processSongData() {
+        songObjects = [];
+        let concertTonicVal = currentSong.tonicIndex;
+        let writtenTonicVal = (concertTonicVal + currentInstrument.keyOffset) % 12;
+        
+        const getDegree = (offset) => {
+            const map = { 0: "1", 2: "2", 4: "3", 5: "4", 7: "5", 9: "6", 11: "7", 12: "8" };
+            return map[offset] || "?";
+        };
+
+        currentSong.sequence.forEach(step => {
+            if (step.isBar) {
+                songObjects.push({ isBar: true });
+                return;
+            }
+
+            if (step.offset === null) {
+                songObjects.push({ isRest: true, label: "Rest", lyric: step.lyric });
+            } else {
+                let noteWrittenIndex = (writtenTonicVal + step.offset) % 12;
+                let octave = currentInstrument.baseOctave;
+                if (noteWrittenIndex < writtenTonicVal) octave++; 
+                
+                let name = NOTE_NAMES[noteWrittenIndex];
+                let degree = getDegree(step.offset);
+                
+                // Frequency Calc (MIDI Method)
+                // 1. Calculate Written MIDI Note
+                // C-1 = 0. C4 = 60.
+                const writtenMIDI = (octave + 1) * 12 + noteWrittenIndex;
+                
+                // 2. Adjust for Transposition to get Concert MIDI
+                const concertMIDI = writtenMIDI - currentInstrument.transpose;
+                
+                // 3. Convert to Hz
+                // Freq = 440 * 2^((d - 69) / 12)
+                const freq = 440 * Math.pow(2, (concertMIDI - 69) / 12);
+
+                songObjects.push({
+                    isRest: false,
+                    isBar: false,
+                    name: name,
+                    degree: degree,
+                    octave: octave,
+                    frequency: freq,
+                    lyric: step.lyric
+                });
+            }
+        });
+    }
+
+    // --- RENDERER ---
+    function renderSheetMusic() {
+        musicStrip.innerHTML = '';
+        
+        const LINE_SPACING = 15;
+        const TOP_PADDING = 80;
+        const CANVAS_HEIGHT = 260; 
+        const CANVAS_WIDTH = 60;
+
+        songObjects.forEach((obj, idx) => {
+            const div = document.createElement('div');
+            div.className = 'score-segment';
+            div.id = `seg-${idx}`;
+
+            if (obj.isBar) {
+                const barLine = document.createElement('div');
+                barLine.className = 'bar-line';
+                barLine.style.height = (4 * LINE_SPACING) + 'px'; 
+                barLine.style.marginTop = TOP_PADDING + 'px';
+                div.appendChild(barLine);
+                musicStrip.appendChild(div);
+                return;
+            }
+
+            const cvs = document.createElement('canvas');
+            cvs.width = CANVAS_WIDTH;
+            cvs.height = CANVAS_HEIGHT;
+            div.appendChild(cvs);
+
+            const ctx = cvs.getContext('2d');
+            ctx.strokeStyle = "#999";
+            ctx.lineWidth = 1;
+            
+            // Draw Staff
+            for (let i = 0; i < 5; i++) {
+                let y = TOP_PADDING + (i * LINE_SPACING);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(CANVAS_WIDTH, y);
+                ctx.stroke();
+            }
+            
+            if (obj.isRest) {
+                ctx.fillStyle = "#2c3e50";
+                ctx.fillRect(CANVAS_WIDTH/2 - 8, TOP_PADDING + (2*LINE_SPACING) - 5, 16, 10);
+            } else {
+                drawNoteOnCanvas(ctx, obj, TOP_PADDING, LINE_SPACING, CANVAS_WIDTH);
+            }
+
+            const labelText = obj.isRest ? 'Rest' : (displayMode === 'degree' ? obj.degree : obj.name);
+            
+            const meta = document.createElement('div');
+            meta.className = 'meta-info';
+            meta.innerHTML = `<span class="note-name">${labelText}</span><span class="lyric">${obj.lyric || ''}</span>`;
+            div.appendChild(meta);
+
+            musicStrip.appendChild(div);
+        });
+    }
+
+    function drawNoteOnCanvas(ctx, note, startY, space, width) {
+        let refNoteIndex, refOctave;
+        const diatonic = "CDEFGAB";
+        
+        if (currentInstrument.clef === 'bass') {
+            // A3 is Top Line
+            refNoteIndex = diatonic.indexOf("A"); 
+            refOctave = 3;
+        } else {
+            // F5 is Top Line
+            refNoteIndex = diatonic.indexOf("F");
+            refOctave = 5;
+        }
+
+        let curStep = diatonic.indexOf(note.name.charAt(0));
+        let octaveDiff = note.octave - refOctave;
+        let stepDiff = (curStep - refNoteIndex) + (octaveDiff * 7);
+        
+        let yPos = startY - (stepDiff * (space / 2));
+        let centerX = width / 2;
+
+        let bottomLineY = startY + (4 * space);
+        
+        // Ledger Lines
+        if (yPos >= bottomLineY + space) {
+            for (let l = bottomLineY + space; l <= yPos; l += space) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - 12, l);
+                ctx.lineTo(centerX + 12, l);
+                ctx.stroke();
+            }
+        } else if (yPos <= startY - space) {
+            for (let l = startY - space; l >= yPos; l -= space) {
+                ctx.beginPath();
+                ctx.moveTo(centerX - 12, l);
+                ctx.lineTo(centerX + 12, l);
+                ctx.stroke();
+            }
+        }
+
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(centerX, yPos, 8, 7, 0, 0, 2 * Math.PI);
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        // Stem
+        let middleY = startY + (2 * space);
+        ctx.beginPath();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        if (yPos >= middleY) {
+            ctx.moveTo(centerX + 7, yPos);
+            ctx.lineTo(centerX + 7, yPos - 35);
+        } else {
+            ctx.moveTo(centerX - 7, yPos);
+            ctx.lineTo(centerX - 7, yPos + 35);
+        }
+        ctx.stroke();
+        
+        if (note.name.includes('#')) {
+            ctx.font = "16px serif";
+            ctx.fillText('♯', centerX - 20, yPos + 5);
+        } else if (note.name.includes('b')) {
+            ctx.font = "16px serif";
+            ctx.fillText('♭', centerX - 20, yPos + 5);
+        }
+    }
+
+    // --- INTERACTION ---
+
+    function updateActiveNote() {
+        document.querySelectorAll('.score-segment').forEach(d => d.classList.remove('active'));
+        
+        if (noteIndex < songObjects.length) {
+            if (songObjects[noteIndex].isBar) {
+                noteIndex++;
+                updateActiveNote();
+                return;
+            }
+
+            let el = document.getElementById(`seg-${noteIndex}`);
+            if (el) {
+                el.classList.add('active');
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+
+            let current = songObjects[noteIndex];
+            if (current.isRest) {
+                feedback.innerText = "Rest...";
+                setTimeout(() => success(), 1000); 
+            } else {
+                let displayNote = displayMode === 'degree' ? current.degree : current.name;
+                feedback.innerText = `Play: ${displayNote}`;
+            }
+        } else {
+            feedback.innerText = "Song Complete! 🎉";
+            feedback.style.color = "var(--success)";
+        }
+    }
+
+    async function startAudio() {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            microphone = audioContext.createMediaStreamSource(stream);
+            microphone.connect(analyser);
+            isListening = true;
+            document.getElementById('btnStart').style.display = 'none';
+            document.getElementById('msgBox').innerText = "Listening...";
+            loadSong();
+            updatePitch();
+        } catch (err) {
+            alert("Error: " + err);
+        }
+    }
+
+    function updatePitch() {
+        if (!isListening) return;
+        analyser.getFloatTimeDomainData(buf);
+        let pitch = autoCorrelate(buf, audioContext.sampleRate);
+        
+        if (pitch !== -1) {
+            document.getElementById('debug').innerText = Math.round(pitch) + " Hz";
+            checkNote(pitch);
+        } else {
+            noteHeldFrames = 0;
+        }
+        requestAnimationFrame(updatePitch);
+    }
+
+    function autoCorrelate(buf, sampleRate) {
+        let SIZE = buf.length;
+        let rms = 0;
+        for (let i = 0; i < SIZE; i++) { let val = buf[i]; rms += val * val; }
+        rms = Math.sqrt(rms / SIZE);
+        if (rms < 0.015) return -1; 
+        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
+        for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+        buf = buf.slice(r1, r2);
+        SIZE = buf.length;
+        let c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) { for (let j = 0; j < SIZE - i; j++) { c[i] = c[i] + buf[j] * buf[j + i]; } }
+        let d = 0; while (c[d] > c[d + 1]) d++;
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) { if (c[i] > maxval) { maxval = c[i]; maxpos = i; } }
+        let T0 = maxpos;
+        let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+        let a = (x1 + x3 - 2 * x2) / 2;
+        let b = (x3 - x1) / 2;
+        if (a) T0 = T0 - b / (2 * a);
+        return sampleRate / T0;
+    }
+
+    function checkNote(freq) {
+        if (noteIndex >= songObjects.length) return;
+        let targetNote = songObjects[noteIndex];
+        if (targetNote.isRest || targetNote.isBar) return;
+
+        let target = targetNote.frequency;
+        let tolerance = target * 0.06; // 6% tolerance
+
+        // Check fundamental AND octave (common issue with low instruments on laptop mics)
+        let match = (freq > target - tolerance && freq < target + tolerance) ||
+                    (freq > (target * 2) - (tolerance * 2) && freq < (target * 2) + (tolerance * 2));
+
+        if (match) {
+            noteHeldFrames++;
+            if (noteHeldFrames > 10) {
+                success();
+            }
+        } else {
+            noteHeldFrames = Math.max(0, noteHeldFrames - 1);
+        }
+    }
+
+    function success() {
+        if (noteIndex >= songObjects.length) return;
+        let el = document.getElementById(`seg-${noteIndex}`);
+        if(el) {
+            el.classList.add('played');
+            el.classList.remove('active');
+        }
+        noteIndex++;
+        noteHeldFrames = 0;
+        updateActiveNote();
+    }
+
+    function toggleMenu() { document.getElementById("myDropdown").classList.toggle("show"); }
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropbtn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) openDropdown.classList.remove('show');
+            }
+        }
+    }
+
+    window.onload = function() {
+        loadSong();
+    };
+
+</script>
+</body>
+</html>
