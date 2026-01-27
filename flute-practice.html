@@ -358,7 +358,7 @@
     
     <!-- MENU START -->
     <nav class="top-nav">
-        <a href="bandpracticestudio.html" class="home-btn">🏠 Home</a>
+        <a href="index.html" class="home-btn">🏠 Home</a>
         <div class="dropdown">
             <button onclick="toggleMenu()" class="dropbtn">Switch Instrument ▼</button>
             <div id="myDropdown" class="dropdown-content">
@@ -370,8 +370,6 @@
                 <a href="trombone-practice.html">Trombone</a>
                 <a href="baritone-practice.html">Baritone</a>
                 <a href="tuba-practice.html">Tuba</a>
-                <a href="bass-practice.html">Bass Guitar</a>
-                <a href="piano-practice.html">Piano</a>
             </div>
         </div>
     </nav>
@@ -803,39 +801,45 @@
         let yPos;
         let needsLedger = false;
 
-        // Note: Written Pitch for Clarinet
+        // Note: Written Pitch for Clarinet/Flute
         // Top Line (F5): staffTop 
-        // Bottom Line (E4): staffTop + 4*spacing
         
         switch(note.name) {
-            case 'C': 
+            case 'Bb': 
                 if (note.octave === 5) {
-                   yPos = staffTop + 30; // 1.5 spaces
-                } else {
-                   // C4: Ledger line below.
-                   yPos = staffTop + (5 * lineSpacing);
+                   yPos = staffTop - 30; // Space above high A
                    needsLedger = true;
+                } else {
+                   yPos = staffTop + 40; // Middle Line
                 }
                 break;
-            case 'D': 
-                yPos = staffTop + (4.5 * lineSpacing);
+            case 'C': 
+                yPos = staffTop + 30;
                 break;
-            case 'E': 
-                yPos = staffTop + (4 * lineSpacing); 
+            case 'D': 
+                yPos = staffTop + 20;
+                break;
+            case 'Eb': 
+                yPos = staffTop + 10;
                 break;
             case 'F': 
-                yPos = staffTop + (3.5 * lineSpacing);
+                yPos = staffTop;
                 break;
             case 'G': 
-                yPos = staffTop + (3 * lineSpacing);
+                yPos = staffTop - 10;
                 break;
             case 'A': 
-                yPos = staffTop + (2.5 * lineSpacing);
+                yPos = staffTop - 20;
+                needsLedger = true;
                 break;
-            case 'B': 
-                yPos = staffTop + (2 * lineSpacing);
+            // Fallback for B natural if ever added
+            case 'B':
+                yPos = staffTop + 40;
                 break;
         }
+
+        // Safety check
+        if (yPos === undefined) return;
 
         // Draw Note Head
         ctx.beginPath();
@@ -843,31 +847,42 @@
         ctx.fillStyle = "black";
         ctx.fill();
 
-        // Draw Stem
-        // On or above B4 -> Stem Down
+        // Draw Stem Logic
+        // Rule: Notes on or above the middle line (B4/Bb4) should have stems DOWN.
+        // Middle line is at staffTop + 40.
         let stemDown = false;
-        if (note.name === 'B' || (note.name === 'C' && note.octave === 5)) {
+        
+        // Check vertical position: if yPos is at or above (numerically less than or equal to) the middle line
+        if (yPos <= staffTop + 40) {
             stemDown = true;
         }
 
         ctx.beginPath();
         if (stemDown) {
+            // Stem DOWN (Left side)
             ctx.moveTo(centerX - 11, yPos);
             ctx.lineTo(centerX - 11, yPos + 50);
         } else {
+            // Stem UP (Right side)
             ctx.moveTo(centerX + 11, yPos);
             ctx.lineTo(centerX + 11, yPos - 50);
         }
         ctx.stroke();
 
-        if (needsLedger) {
-            ctx.beginPath();
-            ctx.moveTo(centerX - 20, yPos);
-            ctx.lineTo(centerX + 20, yPos);
-            ctx.stroke();
+        // Draw Flat Symbol for Bb and Eb
+        if (note.name.includes('b')) {
+            ctx.font = "24px serif";
+            ctx.fillText("♭", centerX - 25, yPos + 8);
         }
 
-        // Removed Canvas Text
+        // Ledger Lines
+        if (needsLedger) {
+            // Line at A5 position (staffTop - 20)
+            ctx.beginPath();
+            ctx.moveTo(centerX - 20, staffTop - 20);
+            ctx.lineTo(centerX + 20, staffTop - 20);
+            ctx.stroke();
+        }
     }
 
     drawStaff();
